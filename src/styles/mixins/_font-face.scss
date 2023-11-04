@@ -1,0 +1,34 @@
+@function createFontMap($file, $weight:normal, $style:normal) {
+	$def: (
+			file: $file,
+			weight: $weight,
+			style: $style
+	);
+	@return $def;
+}
+
+@mixin addFontFace($fontFamily, $basePath, $formats, $defList) {
+	@each $def in $defList {
+		$src: ();
+		@each $format in $formats {
+			$ext: $format;
+
+			@if ($format == 'truetype') {
+				$ext: 'ttf';
+			}
+
+			$url: url('#{$basePath}/#{map_get($def, 'file')}.#{$ext}') format(quote($format));
+			$src: append($src, $url, comma);
+		}
+
+		@font-face {
+			font-family: quote($fontFamily);
+			font-weight: map_get($def, 'weight');
+			font-style: map_get($def, 'style');
+			font-display: swap;
+			src: $src;
+		}
+	}
+}
+
+/* Mixin origin: https://marc-ed-raffalli.github.io/2017/10/14/sass-font-face.html */

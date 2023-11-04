@@ -1,0 +1,141 @@
+:root {
+	//color: #131b33;
+	--primary-color1: rgba(160, 254, 106, 1);
+	--primary-color2: rgba(206, 229, 249, 1);
+	--primary-color3: rgba(255, 255, 255, 1);
+	--secondary-color1: rgba(7, 15, 40, 1);
+	--secondary-color2: rgba(19, 27, 51, 1);
+	--secondary-color3: rgba(22, 33, 67, 1);
+	--secondary-color4: rgba(34, 44, 76, 1);
+}
+
+.theme--light {
+	&.v-list {
+		background-color: var(--secondary-color1);
+		
+	}
+	&.theme--light.v-list-item:not(.v-list-item--active):not(.v-list-item--disabled) {
+		color: var(--primary-color1);
+	}
+	&.theme--light.v-list-item.v-list-item--disabled {
+		color:rgb(158, 158, 158);
+	}
+}
+
+.theme--dark {
+	&.v-btn-toggle {
+		
+			background-color: var(--secondary-color1) !important;
+		
+	}
+	&.v-tabs {
+		background-color: var(--secondary-color1);
+	}
+	&.v-tabs-items {
+		background-color: var(--secondary-color1);
+	}
+	&.v-application {
+		background-color: var(--secondary-color1);
+	
+	}
+	&.v-picker.v-card {
+		background: rgba(19, 27, 51, 1) !important;
+		.v-picker__body  {
+			background: inherit !important;
+		}
+	}
+	&.v-app-bar.mobile-menu {
+		background: rgba(19, 27, 51, 1) !important;
+	}
+	&.v-list.mobile-menu {
+		background: rgba(19, 27, 51, 1) !important;
+	}
+
+	&.v-menu__content {
+		background: rgba(19, 27, 51, 1) !important;
+	}
+
+	&.v-tabs > .v-tabs-bar {
+		background: rgba(19, 27, 51, 1) !important;
+	}
+	
+	&.v-navigation-drawer {
+		background-color: var(--secondary-color2);
+	}
+	&.v-card.v-card-dialog {
+		background: rgba(19, 27, 51, 1) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	}
+	&.v-card.trackrewards {
+		background: rgba(19, 27, 51, 1) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	}
+	&.v-card.pooltoolbot {
+		background: rgba(19, 27, 51, 1) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	}
+	&.v-card.modalform {
+		background: rgba(19, 27, 51, 1) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	}
+	&.v-card {
+		background: rgba(255, 255, 255, 0.05) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	}
+	&.v-sheet {
+		background: rgba(255, 255, 255, 0.05) !important;
+		border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	}
+	&.v-data-table {
+		background: rgba(255, 255, 255, 0.05) !important;
+		
+	}
+	&.v-chip.genesisbar {
+		 
+		&:not(.v-chip--active) {
+			background: rgba(160, 254, 106, 0.1);
+		}
+		.v-chip__content {
+			color: var(--primary-color1);
+			.v-icon {
+				color: var(--primary-color1);
+			}
+		}
+	}
+	&.v-chip.genesisbarred {
+		 
+		&:not(.v-chip--active) {
+			background: rgba(254, 106, 106, 0.384);
+		}
+		.v-chip__content {
+			color: var(--primary-color3);
+			.v-icon {
+				color: var(--primary-color3);
+			}
+		}
+	}
+	.v-sheet {
+		.item-logo {
+			color: var(--primary-color3);
+		}
+	}
+	.genesis-bar {
+		&__left {
+			color: var(--primary-color3);
+		}
+		&__right {
+			color: var(--primary-color1);
+		}
+		.v-progress-linear {
+			color: #162143;
+			border: 1px solid var(--primary-color1);
+			&__background {
+				background: rgba(160, 254, 106, 0.6) !important;
+				opacity: 1 !important;
+			}
+			&__determinate {
+				background-color: var(--primary-color1) !important;
+			}
+		}
+	}
+}

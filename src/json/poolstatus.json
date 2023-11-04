@@ -1,0 +1,20 @@
+[{
+    "Code": "act",
+    "Name": "Active"
+},
+{
+    "Code": "ret",
+    "Name": "Retired"
+},
+{
+    "Code": "off",
+    "Name": "Offline for Maintenance"
+},
+{
+    "Code": "exp",
+    "Name": "Experimental"
+},
+{
+    "Code": "dnu",
+    "Name": "Do Not Delegate To This Pool"}
+]

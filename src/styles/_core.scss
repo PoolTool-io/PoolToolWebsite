@@ -1,0 +1,30 @@
+@import 'mixins/include-media',
+        'mixins/clamp',
+        'mixins/aspect-ratio',
+        'mixins/mini-mixins';
+@import "variables/theme";
+@import "colors";
+
+
+:root {
+    --phone-width: 576px;
+    --tablet-width: 768px;
+    --desktop-width: 1024px;
+    --desktop-width-sm: 1280px;
+    --desktop-width-l: 1440px;
+    --desktop-width-xl: 1600px;
+
+    --content-width: var(--desktop-width-l);
+    --blog-width: 800px;
+
+    --page-gutter: 20px;
+    --grid-gutter: 24px;
+
+    --base-spacing: 15px;
+
+    @include media('<=desktop') {
+        --default-bottom-gap: 30px;
+        --default-top-gap: 30px;
+    }
+
+}
