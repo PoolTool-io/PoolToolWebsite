@@ -70,12 +70,7 @@
             >
               <div class="text-no-wrap flex-shrink-1">Website:</div>
               <div
-                class="
-                  d-flex
-                  text-no-wrap
-                  flex-column flex-sm-row flex-md-row flex-grow-1
-                  pl-2
-                "
+                class="d-flex text-no-wrap flex-column flex-sm-row flex-md-row flex-grow-1 pl-2"
               >
                 <div>
                   <a target="_blank" :href="poolstats.homePage">{{
@@ -91,12 +86,7 @@
             >
               <div class="text-no-wrap flex-shrink-1">Pool ID:</div>
               <div
-                class="
-                  d-flex
-                  text-no-wrap
-                  flex-column flex-sm-row flex-md-row flex-grow-1
-                  pl-2
-                "
+                class="d-flex text-no-wrap flex-column flex-sm-row flex-md-row flex-grow-1 pl-2"
               >
                 <div>
                   <span class="hidden-md-and-up">{{
@@ -118,12 +108,7 @@
                 {{ $t("app.poolWidget.rewardAccount") }}:
               </div>
               <div
-                class="
-                  d-flex
-                  text-no-wrap
-                  flex-column flex-sm-row flex-md-row flex-grow-1
-                  pl-2
-                "
+                class="d-flex text-no-wrap flex-column flex-sm-row flex-md-row flex-grow-1 pl-2"
               >
                 <div>
                   {{ reward_address | ellipsiscrypto(16) }}
@@ -171,11 +156,7 @@
                 {{ $t("app.poolWidget.ownerAccounts") }}:
               </div>
               <div
-                class="
-                  d-flex
-                  text-no-wrap
-                  flex-column flex-sm-row flex-md-row flex-grow-1
-                "
+                class="d-flex text-no-wrap flex-column flex-sm-row flex-md-row flex-grow-1"
               >
                 <div v-for="owner in owners" v-bind:key="owner" class="pl-2">
                   {{ owner | ellipsiscrypto(16) }}

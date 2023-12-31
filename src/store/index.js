@@ -60,7 +60,7 @@ function convertPool(a,state) {
         fpoolmargin: "fm" in a?(a.fm/100):(a.avariableFee/100),//
         poolpledge: "p" in a?a.p:a.pledge, //
         fpoolpledge: "fp" in a?a.fp:a.apledge,//
-        poolpledgevalue: "ap" in a?a.ap:a.actualPledge, //
+        poolpledgevalue: "ap" in a?a.ap:a.actualPledge || 0, //
         itn_verified: "i" in a?a.i:a.itnVerified,//
         epoch_blocks: "b" in a?(a.b!=null?a.b:0):(a.epochBlocks!=null?a.epochBlocks:0),//
         epochBlocksEpoch: "eb" in a?(a.eb!=null?a.eb:0):(a.epochBlocksEpoch!=null?a.epochBlocksEpoch:0),//
