@@ -269,6 +269,7 @@
             </h3>
             {{ admin_message.message }}
           </v-alert>
+          <catalyst-promo-marlowe-hub />
 
           <router-view
             :showBlockIcons="showBlockIcons && enableBlocks"
@@ -807,6 +808,7 @@ import { mapPreferences } from "vue-preferences";
 import update from "@/mixins/update";
 
 import PulseBlock from "./components/PulseBlock/PulseBlock";
+import CatalystPromoMarloweHub from "@/components/CatalystPromo";
 
 import {
   setDocumentDirectionPerLocale,
@@ -1150,6 +1152,7 @@ export default {
   },
   components: {
     PulseBlock,
+    CatalystPromoMarloweHub,
   },
 
   methods: {
