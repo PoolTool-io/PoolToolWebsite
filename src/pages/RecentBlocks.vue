@@ -192,17 +192,34 @@ export default {
         } else {
           //this.$rtdbUnbind("competitive");
           this.loading = true;
-          this.$rtdbBind(
-            "competitive",
-            db
-              .ref(this.network + "/competitive")
-              .orderByKey()
-              .startAt((parseInt(this.search) - 5).toString())
-              .endAt((parseInt(this.search) + 1).toString()),
-            { reset: true }
-          ).then(() => {
-            this.loading = false;
-          });
+          if (
+            parseInt(this.search) >= 10000000 &&
+            parseInt(this.search) <= 10000005
+          ) {
+            this.$rtdbBind(
+              "competitive",
+              db
+                .ref(this.network + "/competitive")
+                .orderByKey()
+                .startAt((9999999).toString())
+                .endAt((parseInt(this.search) + 1).toString()),
+              { reset: true }
+            ).then(() => {
+              this.loading = false;
+            });
+          } else {
+            this.$rtdbBind(
+              "competitive",
+              db
+                .ref(this.network + "/competitive")
+                .orderByKey()
+                .startAt((parseInt(this.search) - 5).toString())
+                .endAt((parseInt(this.search) + 1).toString()),
+              { reset: true }
+            ).then(() => {
+              this.loading = false;
+            });
+          }
         }
       },
     },
