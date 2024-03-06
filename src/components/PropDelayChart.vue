@@ -4,7 +4,6 @@
     elevation="2"
     outlined
     :dark="nightmode"
-    height="100%"
   >
     <v-card-title class="pt-1 pb-1 text-subtitle-1">
       {{ $t("app.networkHealth.propagationDelaysFor") }}
@@ -32,6 +31,95 @@
         :chart-data="propdata"
         :chartOptions="propdelaysoptions"
       ></bar-chart>
+
+      <div class="grid-container">
+        <div class="text-right">
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <div v-bind="attrs" v-on="on">
+                {{ $t("global.propogation") }}
+              </div>
+            </template>
+            <span>{{ $t("app.recentblocks.propDescription") }}</span>
+          </v-tooltip>
+        </div>
+        <div class="">:</div>
+        <div class="text-left">
+          {{ (details.median / 1000) | numFormat("0.00") }}s
+        </div>
+
+        <div class="text-right" v-if="details.protocol_major > 0">
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <div v-bind="attrs" v-on="on">
+                {{ $t("global.protocol") }}
+              </div>
+            </template>
+            <span>{{ $t("app.recentblocks.protoDescription") }}</span>
+          </v-tooltip>
+        </div>
+        <div class="" v-if="details.protocol_major > 0">:</div>
+        <div class="text-left" v-if="details.protocol_major > 0">
+          v{{ details.protocol_major }}.{{ details.protocol_minor }}
+        </div>
+
+        <div class="text-right">
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <div v-bind="attrs" v-on="on">
+                {{ $t("app.networkHealth.nodesReporting") }}
+              </div>
+            </template>
+            <span>{{ $t("app.recentblocks.reportsDescription") }}</span>
+          </v-tooltip>
+        </div>
+        <div class="">:</div>
+        <div class="text-left">
+          {{ details.reporter_count | numFormat("0,0") }}
+          <v-btn x-small icon @click="expandsubkey = !expandsubkey"
+            ><v-icon x-small v-if="!expandsubkey">mdi-arrow-expand-down</v-icon>
+            <v-icon x-small v-else>mdi-arrow-expand-up</v-icon>
+          </v-btn>
+        </div>
+
+        <div
+          style="grid-column-start: 1; grid-column-end: 4"
+          class="text-center"
+        >
+          <v-simple-table v-if="expandsubkey" dense>
+            <template v-slot:default>
+              <thead>
+                <tr>
+                  <th class="text-center">
+                    <v-btn
+                      x-small
+                      icon
+                      @click="expandsubsubkey = !expandsubsubkey"
+                      ><v-icon x-small v-if="!expandsubsubkey"
+                        >mdi-arrow-expand-down</v-icon
+                      ><v-icon x-small v-else
+                        >mdi-arrow-expand-up</v-icon
+                      ></v-btn
+                    >Reporter Version
+                  </th>
+                  <th class="text-center">Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="item in expandsubsubkey
+                    ? details.reporter_versions.subsubkeys
+                    : details.reporter_versions.subkeys"
+                  :key="item[0]"
+                >
+                  <td class="text-center">{{ item[0] }}</td>
+                  <td class="text-center">{{ item[1] }}</td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
+        </div>
+      </div>
     </v-card-text>
   </v-card>
   <v-card v-else elevation="2" outlined :dark="nightmode" height="100%">
@@ -47,6 +135,14 @@ export default {
   },
   data: function () {
     return {
+      expandsubkey: false,
+      details: {
+        protocol_major: 0,
+        protocol_minor: 0,
+        reporter_count: 0,
+        reporter_versions: {},
+        median: 0,
+      },
       propdata: {
         labels: [0],
         datasets: [
@@ -136,8 +232,52 @@ export default {
             },
           ],
         };
+        that.details["reporter_count"] = Object.keys(thisdata.rawtips).length;
+        that.details["protocol_major"] = thisdata["protocol_major"];
+        that.details["protocol_minor"] = thisdata["protocol_minor"];
+        that.details["median"] = thisdata["median"];
+
+        if (Object.hasOwn(thisdata, "reporter_versions")) {
+          const regex = new RegExp(/^[\d]+\.[\d]+\.[\d]+:[a-f0-9]{5}$/);
+          var subkeys = {};
+          var subsubkeys = {};
+          for (let [key, value] of Object.entries(
+            thisdata["reporter_versions"]
+          )) {
+            key = key.replace(/,/gi, ".");
+            if (regex.test(key)) {
+              var subsubkey = key.split(":")[0];
+              var presubkey = subsubkey.split(".");
+              var subkey = presubkey[0] + "." + presubkey[1];
+
+              if (typeof subkeys[subkey] == "undefined") {
+                subkeys[subkey] = value;
+              } else {
+                subkeys[subkey] += value;
+              }
+              if (typeof subsubkeys[subsubkey] == "undefined") {
+                subsubkeys[subsubkey] = value;
+              } else {
+                subsubkeys[subsubkey] += value;
+              }
+            }
+          }
+          that.details["reporter_versions"] = {
+            subkeys: Object.entries(subkeys).sort(),
+            subsubkeys: Object.entries(subsubkeys).sort(),
+          };
+        } else {
+          that.details["reporter_versions"] = null;
+        }
       }
     );
   },
 };
 </script>
+<style scoped>
+.grid-container {
+  display: grid;
+  grid-template-columns: auto 10px auto;
+  padding: 0px;
+}
+</style>
