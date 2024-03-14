@@ -924,6 +924,7 @@ export default {
       return [datalabels, stakevals];
     },
     getGreenToRed: function (d) {
+      if (d < 0) return "rgba(255,0,0,0.5)";
       d = Math.min(100, d / 10);
       var g = d < 50 ? 255 : Math.floor(255 - ((d * 2 - 100) * 255) / 100);
       var r = d > 50 ? 255 : Math.floor((d * 2 * 255) / 100);
