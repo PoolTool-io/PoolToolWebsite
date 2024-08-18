@@ -22,7 +22,7 @@ const routes = [
       { path: 'awards', name: 'awards', component: () => import(/* webpackChunkName: "poolpage" */ '../pages/PoolPage/PoolAwards.vue') },
     ],
   },
-  { path: '/using_zapier', name: "using_zapier", component: () => import(/* webpackChunkName: "termsandprivacy" */ '@/pages/UsingZapier.vue') },
+  
   { path: '/privacy', component: () => import(/* webpackChunkName: "termsandprivacy" */ '../pages/PrivacyPage.vue') },
   { path: '/terms', component: () => import(/* webpackChunkName: "termsandprivacy" */ '../pages/TermsPage.vue') },
   { path: '/address/:address', name: 'address', component: () => import(/* webpackChunkName: "address" */ '../pages/AddressDetail.vue') },

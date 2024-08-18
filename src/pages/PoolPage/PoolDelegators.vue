@@ -563,12 +563,6 @@ export default {
           value: "k",
         },
         {
-          text: this.$t("app.addressDetail.adahandles"),
-          align: "left",
-          sortable: true,
-          value: "ahdollar",
-        },
-        {
           value: "v",
           sortable: true,
           align: "left",

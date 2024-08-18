@@ -93,11 +93,7 @@
       </v-col>
     </v-row>
 
-    <v-row v-if="showZapierPost">
-      <v-col cols="12" class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-        <zapier-post :nightmode="nightmode" />
-      </v-col>
-    </v-row>
+    
   </div>
 </template>
 
@@ -109,7 +105,7 @@ export default {
   components: {
     PieChart: () => import("@/components/PieChart"),
     PriceChart: () => import("@/components/PriceChart"),
-    zapierPost: () => import("@/components/zapierPost"),
+    
     // PoolStatistics: () => import("@/components/dashboard/PoolStatistics.vue"),
     // TopTenStakeInflows: () =>
     //   import("@/components/dashboard/TopTenStakeInflows.vue"),

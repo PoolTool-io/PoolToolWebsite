@@ -160,8 +160,7 @@
       "referenceCurrency": "",
       "downloadPeriod": "",
       "downloadData": "",
-      "poolId": "",
-      "adahandles": ""
+      "poolId": ""
     },
     "about": {
       "aboutPoolTool": "About PoolTool",
@@ -285,7 +284,6 @@
       "pleaseInvestigateTheseAsWell": "Please investigate these as well and use whichever strategy (or all of them) that makes sense for your platform",
       "ChatSetup": "",
       "Admin": "",
-      "zapierIntegration": "",
       "post": ""
     },
     "poolOrphans": {
