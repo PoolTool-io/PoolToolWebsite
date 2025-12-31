@@ -938,7 +938,6 @@ export default {
       },
       viewcolumns: {
         defaultValue: [
-          "nmrank",
           "groupname",
           "poolcount",
           "grouplivestake",
@@ -1002,21 +1001,7 @@ export default {
         });
       }
 
-      if (!this.groupPools) {
-        if (this.viewcolumns.includes("nmrank")) {
-          h.push({
-            text: "Daedalus Rank",
-            align: "center",
-            sortable: true,
-            value: "nmrank",
-          });
-        }
-
-        hl.push({
-          text: "Daedalus Rank",
-          value: "nmrank",
-        });
-      }
+      
 
       if (!this.groupPools) {
         if (this.viewcolumns.includes("favorite")) {
@@ -1540,7 +1525,6 @@ export default {
 
     if (this.viewcolumns == null)
       this.viewcolumns = [
-        "nmrank",
         "groupname",
         "poolcount",
         "grouplivestake",

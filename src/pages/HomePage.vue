@@ -14,7 +14,7 @@
         <track-rewards :nightmode="nightmode"></track-rewards>
       </v-col>
       <v-col class="">
-        <mobile-app :nightmode="nightmode"></mobile-app>
+        <drep-platform :nightmode="nightmode"></drep-platform>
       </v-col>
       <v-col class="">
         <pool-tool-bot :nightmode="nightmode"></pool-tool-bot>
@@ -190,7 +190,7 @@ export default {
     SettingsCard: () => import("@/components/SettingsCard"),
     TrackRewards: () => import("@/components/TrackRewards"),
     PoolToolBot: () => import("@/components/PoolToolBot"),
-    MobileApp: () => import("@/components/MobileApp"),
+    DrepPlatform: () => import("@/components/DrepPlatform"),
     BarChart: () => import("@/components/BarChart"),
     dashboard: () => import("@/components/dashBoard"),
     GenesisBar,

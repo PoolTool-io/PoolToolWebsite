@@ -307,10 +307,7 @@
         {{ item.poolpledgevalue | toada | numFormat("0,0.0a") }}
       </span>
     </template>
-    <template #[`item.nmrank`]="{ item }"
-      ><span v-if="item.rank < 550">{{ item.rank }}</span
-      ><span v-else>-</span></template
-    >
+    
     <template #[`item.poolmargin`]="{ item }">
       <span class="text-no-wrap">
         <span v-if="item.poolmargin != item.fpoolmargin && !item.genesis_pool">

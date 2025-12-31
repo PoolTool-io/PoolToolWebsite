@@ -260,15 +260,7 @@ export default {
                         }
                         /* eslint-disable no-unreachable */
                         break
-                    case 'nmrank':
-                        if(typeof a['rank'] == "undefined") a['rank']=0
-                        if(typeof b['rank'] == "undefined") b['rank']=0
-                        if (!isDesc[0]) {
-                            return a['rank'] < b['rank'] ? -1 : 1;
-                        } else {
-                            return b['rank'] < a['rank'] ? -1 : 1;
-                        }
-                        break
+                    
 
                     default:
                         if(typeof a[index[0]] == "undefined") a[index[0]]=0

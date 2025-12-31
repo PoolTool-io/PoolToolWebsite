@@ -801,7 +801,6 @@ import { mdiThemeLightDark } from "@mdi/js";
 import "firebase/compat/messaging";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
-
 import { preference } from "vue-preferences";
 import { mapPreferences } from "vue-preferences";
 import update from "@/mixins/update";
@@ -1081,6 +1080,10 @@ export default {
       //return this.admin_message.chillin
     },
 
+    adaprice: function () {
+      return this.genesis.prices.usd;
+    },
+
     genesis: function () {
       return this.$store.getters.getGenesis;
     },
@@ -1193,20 +1196,21 @@ export default {
     },
 
     enableNotifications: function () {
-      if (!("Notification" in window)) {
-        console.log("Notifications are not supported");
-      } else if (Notification.permission === "granted") {
-        this.initializeFirebase();
-      } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then((permission) => {
-          if (permission === "granted") {
-            this.initializeFirebase();
-          }
-        });
-      } else {
-        console.log("No permission to send notification");
-      }
-      this.requestPermission = Notification.permission;
+      return;
+      // if (!("Notification" in window)) {
+      //   console.log("Notifications are not supported");
+      // } else if (Notification.permission === "granted") {
+      //   this.initializeFirebase();
+      // } else if (Notification.permission !== "denied") {
+      //   Notification.requestPermission().then((permission) => {
+      //     if (permission === "granted") {
+      //       this.initializeFirebase();
+      //     }
+      //   });
+      // } else {
+      //   console.log("No permission to send notification");
+      // }
+      // this.requestPermission = Notification.permission;
     },
     initializeFirebase: function () {
       if (firebase.messaging.isSupported()) {
