@@ -220,13 +220,6 @@
         </v-row>
         <v-row align="end" justify="space-around" class="mt-0 d-flex">
           <v-col v-if="!pool.genesis_pool" cols="auto" class="text-center">
-            <span :class="paintred(this.pool.livestake)"
-              >{{ this.pool.livestake | toada | numFormat("0,0.0a") }} ₳</span
-            >
-
-            <div class="d-block text-no-wrap">{{ $t("global.liveStake") }}</div>
-          </v-col>
-          <v-col v-if="!pool.genesis_pool" cols="auto" class="text-center">
             <span class="text-h6"
               >{{ pool.blockstake | toada | numFormat("0,0.0a") }} ₳</span
             >
@@ -620,8 +613,6 @@ export default {
     "nightmode",
     "currentGenesis",
     "pool",
-    "minlivestake",
-    "maxlivestake",
   ],
 
   data() {
@@ -734,8 +725,8 @@ export default {
       favoritepools.set(this.favorites);
     },
 
-    paintred: function (livestake) {
-      return livestake > this.saturationpoint ? "text-h6 saturated" : "text-h6";
+    paintred: function (stake) {
+      return stake > this.saturationpoint ? "text-h6 saturated" : "text-h6";
     },
   },
 };

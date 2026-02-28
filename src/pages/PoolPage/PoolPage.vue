@@ -25,8 +25,6 @@
         :reward_address="reward_address"
         :owners="owners"
         class="pb-1"
-        maxlivestake="0"
-        minlivestake="0"
         :pool="pool"
         :nightmode="nightmode"
         :currentGenesis="genesis"
@@ -48,11 +46,6 @@
         <v-tab :to="'/pool/' + this.$route.params.poolid + '/curve'">{{
           $t("app.poolPage.curves")
         }}</v-tab>
-        <v-tab
-          v-if="!pool.genesis_pool"
-          :to="'/pool/' + this.$route.params.poolid + '/delegators'"
-          >{{ $t("global.delegators") }}</v-tab
-        >
         <v-tab
           v-if="isSignedIn && (poolIsMine || !pool.claimed)"
           :to="'/pool/' + this.$route.params.poolid + '/manage'"
@@ -160,9 +153,9 @@ export default {
       var ls = this.$store.getters.getPools;
       if (this.poolindex != null) {
         var selected_pool = ls[this.poolindex];
+        console.log(this.rewards);
         selected_pool["height"] = this.heights;
         selected_pool["blockstake"] = this.activestake;
-        selected_pool["livestake"] = selected_pool["live_stake"];
 
         selected_pool["roi"] =
           this.rewards["epochRos"] != null ? this.rewards["epochRos"] : 0;

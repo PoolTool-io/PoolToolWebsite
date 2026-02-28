@@ -8,24 +8,6 @@
         ></v-app-bar-nav-icon>
 
         <v-spacer />
-        <v-btn
-          icon
-          @click="
-            pulseitem = 'NewsFeed';
-            pulseVisible = true;
-          "
-        >
-          <v-icon>mdi-newspaper</v-icon>
-        </v-btn>
-        <v-btn
-          icon
-          @click="
-            pulseitem = 'PoolFeed';
-            pulseVisible = true;
-          "
-        >
-          <v-icon>mdi-view-list</v-icon>
-        </v-btn>
       </v-app-bar>
 
       <v-navigation-drawer
@@ -183,55 +165,8 @@
         </v-list>
       </v-navigation-drawer>
 
-      <v-navigation-drawer
-        v-if="!chillin && pulseitem == null"
-        fixed
-        right
-        clipped
-        dark
-        mobile-breakpoint="600"
-        app
-        mini-variant
-      >
-        <v-list>
-          <v-list-item
-            @click="
-              pulseitem = 'NewsFeed';
-              pulseVisible = true;
-            "
-          >
-            <v-tooltip left>
-              <template v-slot:activator="{ on }">
-                <div v-on="on">
-                  <v-icon>mdi-newspaper</v-icon>
-                </div>
-              </template>
-              <span>News Feed</span>
-            </v-tooltip>
-          </v-list-item>
-          <v-list-item
-            @click="
-              pulseitem = 'PoolFeed';
-              pulseVisible = true;
-            "
-          >
-            <v-tooltip left>
-              <template v-slot:activator="{ on }">
-                <div v-on="on">
-                  <v-icon>mdi-view-list</v-icon>
-                </div>
-              </template>
-              <span>Pool Feed</span>
-            </v-tooltip>
-          </v-list-item>
-        </v-list>
-      </v-navigation-drawer>
-
       <v-main
         class="pt-0"
-        v-bind:class="{
-          '-pulse-visible': this.pulseVisible,
-        }"
       >
         <v-container v-if="!chillin" fluid class="pt-3 pl-3 pr-3" height="100%">
           <v-snackbar
@@ -252,8 +187,6 @@
 
           <v-alert
             :class="{
-              pulseBlockVisible:
-                showBlockIcons && enableBlocks && !pulseVisible && !ismobile,
               'mb-1': !showBlockIcons && enableBlocks,
             }"
             dense
@@ -273,7 +206,7 @@
           <router-view
             :showBlockIcons="showBlockIcons && enableBlocks"
             :ismobile="ismobile"
-            :ispulseVisible="pulseVisible"
+            :ispulseVisible="false"
             :nightmode="true"
             :enableLogins="enableLogins"
             @claimAddress="claimAddress"
@@ -301,13 +234,6 @@
           </v-parallax>
         </v-container>
 
-        <pulse-block
-          :showBlockIcons="showBlockIcons && enableBlocks"
-          :ismobile="ismobile"
-          :pulseitem="pulseitem"
-          v-bind:class="{ '-pulse-visible': this.pulseVisible }"
-          @pulseVisible="setPulseVisible"
-        />
       </v-main>
 
       <v-dialog v-model="displayAdsModal" max-width="460">
@@ -805,7 +731,6 @@ import { preference } from "vue-preferences";
 import { mapPreferences } from "vue-preferences";
 import update from "@/mixins/update";
 
-import PulseBlock from "./components/PulseBlock/PulseBlock";
 //import CatalystPromoMarloweHub from "@/components/CatalystPromo";
 
 import {
@@ -1023,26 +948,7 @@ export default {
             }
           );
         }
-        if (
-          this.network == "Mainnet" &&
-          typeof newdata != "undefined" &&
-          typeof olddata != "undefined" &&
-          newdata.portfolios != olddata.portfolios
-        ) {
-          this.getJSON(
-            "https://s3-us-west-2.amazonaws.com/data.pooltool.io/" +
-              this.network +
-              "/portfolios.json?t=" +
-              Date.now(),
-            function (err, thisdata) {
-              if (err == null) {
-                self.$store.commit("portfolios", thisdata);
-                self.$store.commit("portfolios_loaded", true);
-              }
-            }
-          );
-        }
-      },
+      }
     },
   },
 
@@ -1153,7 +1059,6 @@ export default {
     }),
   },
   components: {
-    PulseBlock,
     // CatalystPromoMarloweHub,
   },
 
@@ -1187,12 +1092,6 @@ export default {
     },
     setCurrency(currency) {
       this.currency = currency;
-    },
-    setPulseVisible(toggle) {
-      this.pulseVisible = toggle;
-      if (!this.pulseVisible) {
-        this.pulseitem = null;
-      }
     },
 
     enableNotifications: function () {
@@ -1587,22 +1486,10 @@ export default {
     reloadPoolToolNow: function () {
       window.location.reload();
     },
-
-    togglePulseVisible: function (status) {
-      if (status) {
-        this.pulseVisible = status;
-      } else {
-        this.pulseVisible = !this.pulseVisible;
-      }
-      if (!this.pulseVisible) {
-        this.pulseitem = null;
-      }
-    },
   },
   data() {
     return {
       notifications: 0,
-      pulseitem: null,
       displayAdsModal: false,
       enableBlocks: true,
       showBlockIcons: true,
@@ -1675,7 +1562,6 @@ export default {
       translations: null,
       myUserId: myUserId.get(),
 
-      pulseVisible: false,
     };
   },
 };

@@ -131,7 +131,6 @@ export const store = new Vuex.Store({
     display_user: {},
     langs_raw: {},
     quietEpoch: {},
-    portfolios_loaded: false,
     poolsdata: [],
     network: network_raw.get(),
     active_stake: 0,
@@ -264,9 +263,7 @@ export const store = new Vuex.Store({
     mary_db_sync_status_forecast_rewards_complete_epoch: null,
     mary_db_sync_status_actual_rewards_complete_epoch: null,
     mary_db_sync_status_new_rewards_complete_epoch: 0,
-    mary_db_sync_status_portfolios: {},
     heights: {},
-    portfolios: {},
     admin_message: { chillin: false, message: "", title: "" },
     userId: null,
     userData: {},
@@ -425,10 +422,6 @@ export const store = new Vuex.Store({
           state.network + "/mary_db_sync_status/new_rewards_complete_epoch"
         )
       );
-      bindFirebaseRef(
-        "mary_db_sync_status_portfolios",
-        db.ref(state.network + "/mary_db_sync_status/portfolios")
-      );
 
       bindFirebaseRef(
         "admin_message",
@@ -498,14 +491,8 @@ export const store = new Vuex.Store({
     setUserId(state, data) {
       state.userId = data;
     },
-    portfolios_loaded(state, data) {
-      state.portfolios_loaded = data;
-    },
     rewards(state, data) {
       state.rewards = data;
-    },
-    portfolios(state, data) {
-      state.portfolios = data;
     },
 
     rewardsnp1(state, data) {
@@ -588,8 +575,6 @@ export const store = new Vuex.Store({
     getPools: (state) => {
       return state.pools;
     },
-    portfolios_loaded: (state) => state.portfolios_loaded,
-    portfolios: (state) => state.portfolios,
     rewardsnp1: (state) => state.rewardsnp1,
     heights: (state) => state.heights,
     rewards: (state) => state.rewards,
@@ -656,7 +641,6 @@ export const store = new Vuex.Store({
             ? state.mary_db_sync_status_pool_actuals_calculated_epoch[".value"]
             : 0,
 
-        portfolios: state.mary_db_sync_status_portfolios,
         livedata2: {
           max_livestake:
             state.ecosystem != null ? state.ecosystem.maxLiveStake : 0,

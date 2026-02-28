@@ -15,40 +15,6 @@
       <v-card-title class="my-0 py-0">
         {{ $t("app.pools.cardanoPools") }}
         <v-spacer></v-spacer>
-        <v-autocomplete
-          v-model="portfolio"
-          placeholder="Start typing to Search"
-          :items="portfolioitems"
-          item-text="name"
-          item-value="id"
-          hide-selected
-          clearable
-          dense
-          hide-details
-          prepend-icon="mdi-database-search"
-          label="Choose Portfolio"
-          class="pt-2"
-        >
-          <template v-slot:item="data">
-            <v-list-item-content dark class="ma-2">
-              <v-list-item-title v-html="data.item.name"></v-list-item-title>
-              <v-list-item-subtitle
-                class="green--text text--darken-1"
-                v-html="data.item.description"
-              ></v-list-item-subtitle>
-            </v-list-item-content>
-          </template>
-        </v-autocomplete>
-        <v-spacer></v-spacer>
-        <v-switch
-          :color="nightmode ? 'blue darken-2' : 'blue lighten-1'"
-          dense
-          v-model="groupPools"
-          :label="$t('app.pools.consolidate')"
-          class="mx-2"
-        ></v-switch>
-
-        <v-spacer></v-spacer>
         <div>
           <v-row class="pa-0 ma-0">
             <v-text-field
@@ -135,58 +101,6 @@
           </v-radio-group>
         </div>
       </v-card-title>
-      <v-container v-if="portfolio" fluid class="pt-2 pb-2">
-        <v-card class="mx-auto mb-2" outlined raised>
-          <div class="d-flex justify-space-between pa-2">
-            <span class="font-weight-black"
-              >{{ selectedPortfolio.name }}
-
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn
-                    v-bind="attrs"
-                    v-on="on"
-                    v-if="selectedPortfolio.id"
-                    text
-                    x-small
-                    icon
-                    v-clipboard="'https://pooltool.io/' + selectedPortfolio.id"
-                  >
-                    <v-icon small>mdi-open-in-new</v-icon>
-                  </v-btn>
-                </template>
-                <span>{{ "Share Link" }}</span>
-              </v-tooltip> </span
-            ><span v-if="selectedPortfolio.adafolio" class="text-no-wrap"
-              >Curated by:
-              <a
-                href="https://adafolio.com/"
-                class="pl-2"
-                :style="
-                  nightmode
-                    ? 'color:#FFFFFF;text-decoration: none;'
-                    : 'color:rgba(0, 0, 0, 0.87);text-decoration: none;'
-                "
-                ><img
-                  style="vertical-align: middle"
-                  src="adafolio-favicon-alternate.png"
-                  width="20"
-                  height="20"
-                />
-                Adafolio</a
-              ></span
-            >
-          </div>
-          <p class="pa-2">{{ selectedPortfolio.description }}</p>
-
-          <p
-            v-if="filterIconColor == 'green'"
-            class="px-2 text-right text-caption"
-          >
-            You have filters applied. Please reset filters to see all items.
-          </p>
-        </v-card>
-      </v-container>
       <v-container v-if="expandFilter" fluid class="pt-2 pb-2">
         <v-card class="mx-auto mb-2" outlined raised>
           <v-card-text class="my-0 py-0">
@@ -387,7 +301,7 @@
         :nightmode="nightmode"
         :favorites="favorites"
         @togglefavorite="togglefavorite"
-        :myPoolList="poolsGrouped"
+        :myPoolList="poolsfiltered"
         :tableheaders="tableheaders.tableheaders"
         :genesis="genesis"
         :tableupdating="tableupdating"
@@ -438,7 +352,6 @@ export default {
   },
   data: function () {
     return {
-      portfolio: this.$route.params.portfolio,
       tableupdating: false,
       columnsetdialog: false,
       searchtype: "all",
@@ -542,173 +455,6 @@ export default {
     isSignedIn: function () {
       return this.$store.getters.getIsSignedIn;
     },
-    portfolios_loaded: function () {
-      return this.$store.getters.portfolios_loaded;
-    },
-    portfolios_raw: function () {
-      return this.$store.getters.portfolios;
-    },
-    portfolioitems: function () {
-      var a = [];
-
-      if (
-        this.portfolios_loaded &&
-        typeof this.portfolios_raw != "undefined" &&
-        this.portfolios_raw != null
-      ) {
-        for (var value of Object.values(this.portfolios_raw)) {
-          if (!value.disabled && value.display) {
-            a.push(value);
-          }
-        }
-      }
-      return a.filter((a) => !a.disabled && a.display);
-    },
-    selectedPortfolio: function () {
-      if (typeof this.portfolioitems == "undefined") {
-        return {
-          id: null,
-          name: null,
-          description: null,
-          pools: [],
-        };
-      }
-      return this.portfolioitems.find((a) => a.id == this.portfolio);
-    },
-    poolsGrouped: function () {
-      if (!this.groupPools) {
-        return this.poolsfiltered;
-      } else {
-        return Object.values(this.poolsGroupedObj);
-      }
-    },
-    poolsGroupedObj: function () {
-      let sumarray = {};
-      var group = null;
-      this.poolsfiltered.forEach((item) => {
-        if (!item.pool_retired && !item.genesis_pool) {
-          if (item.groupname != null && item.groupname != "") {
-            if (
-              typeof this.poolCountsByGroup[item.groupname] != "undefined" &&
-              this.poolCountsByGroup[item.groupname] > 1
-            ) {
-              group = item.groupname;
-
-              if (typeof sumarray[group] == "undefined") {
-                sumarray[group] = {};
-                sumarray[group]["groupnameview"] = group;
-                sumarray[group]["ticker"] = new Set();
-                if (item.ticker != null && item.ticker != "") {
-                  sumarray[group]["ticker"].add(item.ticker);
-                }
-
-                sumarray[group]["poolpubkey"] = item.poolpubkey;
-                sumarray[group]["poolpledge"] = parseInt(item.poolpledge);
-                sumarray[group]["poolpledgevalue"] = parseInt(
-                  item.poolpledgevalue
-                );
-                sumarray[group]["groupblockstake"] =
-                  parseInt(
-                    item.poolpubkey in this.activestake
-                      ? this.activestake[item.poolpubkey]
-                      : 0
-                  ) || 0;
-                sumarray[group]["grouplivestake"] =
-                  parseInt(item.live_stake) || 0;
-                sumarray[group]["epoch_blocks"] =
-                  parseInt(
-                    item.epochBlocksEpoch == this.genesis.epoch
-                      ? item.epoch_blocks
-                      : 0
-                  ) || 0;
-                sumarray[group]["life_blocks"] =
-                  parseInt(item.life_blocks) || 0;
-                sumarray[group]["epochBlocksEpoch"] = this.genesis.epoch;
-                sumarray[group]["grouprewardstake"] =
-                  parseInt(
-                    item.poolpubkey in this.rewardstake
-                      ? this.rewardstake[item.poolpubkey]
-                      : 0
-                  ) || 0;
-                sumarray[group]["group_epoch_rewards"] =
-                  parseInt(
-                    item.poolpubkey in this.rewards &&
-                      "epochRewards" in this.rewards[item.poolpubkey]
-                      ? this.rewards[item.poolpubkey]["epochRewards"]
-                      : 0
-                  ) || 0;
-                sumarray[group]["group_epoch_tax"] =
-                  parseInt(
-                    item.poolpubkey in this.rewards &&
-                      "epochTax" in this.rewards[item.poolpubkey]
-                      ? this.rewards[item.poolpubkey]["epochTax"]
-                      : 0
-                  ) || 0;
-                sumarray[group]["poolcount"] = 1;
-              } else {
-                if (item.ticker != null && item.ticker != "") {
-                  sumarray[group]["ticker"].add(item.ticker);
-                }
-                // sumarray[group]["ticker"] =
-                //   sumarray[group]["ticker"] + "," + item.ticker;
-                sumarray[group]["poolpubkey"] =
-                  sumarray[group]["poolpubkey"] + "," + item.poolpubkey;
-                sumarray[group]["poolpledge"] =
-                  sumarray[group]["poolpledge"] + parseInt(item.poolpledge);
-                sumarray[group]["poolpledgevalue"] =
-                  sumarray[group]["poolpledgevalue"] +
-                  parseInt(item.poolpledgevalue);
-                sumarray[group]["groupblockstake"] =
-                  sumarray[group]["groupblockstake"] +
-                  (parseInt(
-                    item.poolpubkey in this.activestake
-                      ? this.activestake[item.poolpubkey]
-                      : 0
-                  ) || 0);
-                sumarray[group]["grouplivestake"] =
-                  sumarray[group]["grouplivestake"] +
-                  (parseInt(item.live_stake) || 0);
-                sumarray[group]["epoch_blocks"] =
-                  sumarray[group]["epoch_blocks"] +
-                  (parseInt(
-                    item.epochBlocksEpoch == this.genesis.epoch
-                      ? item.epoch_blocks
-                      : 0
-                  ) || 0);
-                sumarray[group]["life_blocks"] =
-                  sumarray[group]["life_blocks"] +
-                  (parseInt(item.life_blocks) || 0);
-                sumarray[group]["grouprewardstake"] =
-                  sumarray[group]["grouprewardstake"] +
-                  (parseInt(
-                    item.poolpubkey in this.rewardstake
-                      ? this.rewardstake[item.poolpubkey]
-                      : 0
-                  ) || 0);
-                sumarray[group]["group_epoch_rewards"] =
-                  sumarray[group]["group_epoch_rewards"] +
-                  (parseInt(
-                    item.poolpubkey in this.rewards &&
-                      "epochRewards" in this.rewards[item.poolpubkey]
-                      ? this.rewards[item.poolpubkey]["epochRewards"]
-                      : 0
-                  ) || 0);
-                sumarray[group]["group_epoch_tax"] =
-                  sumarray[group]["group_epoch_tax"] +
-                  (parseInt(
-                    item.poolpubkey in this.rewards &&
-                      "epochTax" in this.rewards[item.poolpubkey]
-                      ? this.rewards[item.poolpubkey]["epochTax"]
-                      : 0
-                  ) || 0);
-                sumarray[group]["poolcount"] += 1;
-              }
-            }
-          }
-        }
-      });
-      return Object.values(sumarray);
-    },
     poolCountsByGroup: function () {
       var poolcounts = {};
       this.pools.forEach((item) => {
@@ -727,11 +473,6 @@ export default {
     poolsfiltered: function () {
       /* eslint-disable no-unused-vars */
       return this.pools.filter((item) => {
-        if (this.portfolio != null) {
-          if (!this.selectedPortfolio.pools.includes(item["poolpubkey"])) {
-            return false;
-          }
-        }
         if (
           item["poolpledge"] / 1e6 <
             this.pledgeValues[this.appliedfilters.pledgeRange[0]] ||
@@ -922,10 +663,6 @@ export default {
       return this.pools.length;
     },
     ...mapPreferences({
-      groupPools: {
-        defaultValue: false,
-      },
-
       poolsPage: {
         defaultValue: 1,
       },
@@ -938,11 +675,6 @@ export default {
       },
       viewcolumns: {
         defaultValue: [
-          "groupname",
-          "poolcount",
-          "grouplivestake",
-          "grouppoolpledge",
-          "grouproi",
           "favorite",
           "ticker",
           "poolcost",
@@ -950,7 +682,6 @@ export default {
           "poolpledge",
           "epoch_blocks",
           "height",
-          "livestake",
           "life_blocks",
           "twelveros",
         ],
@@ -965,7 +696,6 @@ export default {
       var hl = [];
 
       if (
-        !this.groupPools &&
         this.isSignedIn &&
         this.showGrouper &&
         this.userData != null &&
@@ -986,25 +716,7 @@ export default {
         });
       }
 
-      if (this.groupPools) {
-        h.push({
-          text: "Group",
-          align: "center",
-          value: "groupnameview",
-          divider: true,
-          sortable: true,
-          filterable: false,
-        });
-        hl.push({
-          text: "GROUP",
-          value: "groupnameview",
-        });
-      }
-
-      
-
-      if (!this.groupPools) {
-        if (this.viewcolumns.includes("favorite")) {
+      if (this.viewcolumns.includes("favorite")) {
           h.push({
             text: "",
             align: "center",
@@ -1017,9 +729,7 @@ export default {
           text: "Favorites",
           value: "favorite",
         });
-      }
-      if (!this.groupPools) {
-        if (this.viewcolumns.includes("ticker")) {
+      if (this.viewcolumns.includes("ticker")) {
           h.push({
             text: this.$t("global.ticker"),
             align: "center",
@@ -1099,88 +809,7 @@ export default {
           text: this.$t("global.declaredPledge"),
           value: "poolpledge",
         });
-      } else {
-        if (this.viewcolumns.includes("groupticker")) {
-          h.push({
-            text: this.$t("global.ticker"),
-            align: "center",
-            sortable: false,
-            value: "groupticker",
-          });
-        }
-        hl.push({
-          text: this.$t("global.ticker"),
-          value: "groupticker",
-        });
-
-        if (this.viewcolumns.includes("poolcount")) {
-          h.push({
-            text: this.$t("global.poolCount"),
-            align: "center",
-            sortable: true,
-            value: "poolcount",
-          });
-        }
-        hl.push({
-          text: this.$t("global.poolCount"),
-          value: "poolcount",
-        });
-
-        if (this.viewcolumns.includes("grouppoolpubkey")) {
-          h.push({
-            value: "grouppoolpubkey",
-            sortable: false,
-            align: "start",
-            text: this.$t("global.poolID"),
-            divider: true,
-          });
-        }
-        hl.push({
-          text: this.$t("global.poolID"),
-          value: "grouppoolpubkey",
-        });
-
-        if (this.viewcolumns.includes("grouppoolpledge")) {
-          h.push({
-            value: "grouppoolpledge",
-            sortable: false,
-            align: "end",
-            divider: true,
-            text: this.$t("global.declaredPledge") + " (₳)",
-          });
-        }
-        hl.push({
-          text: this.$t("global.declaredPledge"),
-          value: "grouppoolpledge",
-        });
-      }
-      if (this.groupPools) {
-        if (this.viewcolumns.includes("grouproi")) {
-          h.push({
-            text:
-              this.$t("global.epoch") +
-              " " +
-              (this.genesis.epoch - 2) +
-              " " +
-              this.$t("global.ros"),
-            align: "center",
-            value: "grouproi",
-            divider: true,
-            sortable: false,
-            filterable: false,
-          });
-        }
-        hl.push({
-          text:
-            this.$t("global.epoch") +
-            " " +
-            (this.genesis.epoch - 2) +
-            " " +
-            this.$t("global.ros"),
-          value: "grouproi",
-        });
-      } else {
-        if (this.viewcolumns.includes("roi")) {
+      if (this.viewcolumns.includes("roi")) {
           h.push({
             text:
               this.$t("global.epoch") +
@@ -1229,99 +858,47 @@ export default {
             this.$t("global.ros"),
           value: "roifcp1",
         });
-      }
       if (this.viewcolumns.includes("epoch_tax")) {
-        if (this.groupPools) {
-          h.push({
-            text: this.$t("global.epochPoolFees"),
-            align: "center",
-            value: "group_epoch_tax",
-            divider: true,
-            sortable: false,
-            filterable: false,
-          });
-        } else {
-          h.push({
-            text: this.$t("global.epochPoolFees"),
-            align: "center",
-            value: "epoch_tax",
-            divider: true,
-            sortable: false,
-            filterable: false,
-          });
-        }
-      }
-      if (this.groupPools) {
-        hl.push({
+        h.push({
           text: this.$t("global.epochPoolFees"),
-          value: "group_epoch_tax",
-        });
-      } else {
-        hl.push({
-          text: this.$t("global.epochPoolFees"),
+          align: "center",
           value: "epoch_tax",
+          divider: true,
+          sortable: false,
+          filterable: false,
         });
       }
+      hl.push({
+        text: this.$t("global.epochPoolFees"),
+        value: "epoch_tax",
+      });
 
       if (this.viewcolumns.includes("blockstake")) {
-        if (this.groupPools) {
-          h.push({
-            value: "groupblockstake",
-            sortable: true,
-            align: "right",
-            text: this.$t("global.activeStake"),
-          });
-        } else {
-          h.push({
-            value: "blockstake",
-            sortable: true,
-            align: "right",
-            text: this.$t("global.activeStake"),
-          });
-        }
-      }
-      if (this.groupPools) {
-        hl.push({
-          text: this.$t("global.activeStake"),
-          value: "groupblockstake",
-        });
-      } else {
-        hl.push({
-          text: this.$t("global.activeStake"),
+        h.push({
           value: "blockstake",
+          sortable: true,
+          align: "right",
+          text: this.$t("global.activeStake"),
         });
       }
+      hl.push({
+        text: this.$t("global.activeStake"),
+        value: "blockstake",
+      });
 
       if (this.viewcolumns.includes("activestakepercent")) {
-        if (this.groupPools) {
-          h.push({
-            text: this.$t("global.activeStake") + " %",
-            align: "center",
-            sortable: true,
-            value: "groupactivestakepercent",
-            filterable: false,
-          });
-        } else {
-          h.push({
-            text: this.$t("global.activeStake") + " %",
-            align: "center",
-            sortable: true,
-            value: "activestakepercent",
-            filterable: false,
-          });
-        }
-      }
-      if (this.groupPools) {
-        hl.push({
+        h.push({
           text: this.$t("global.activeStake") + " %",
-          value: "groupactivestakepercent",
-        });
-      } else {
-        hl.push({
-          text: this.$t("global.activeStake") + " %",
+          align: "center",
+          sortable: true,
           value: "activestakepercent",
+          filterable: false,
         });
       }
+      hl.push({
+        text: this.$t("global.activeStake") + " %",
+        value: "activestakepercent",
+      });
 
       if (this.viewcolumns.includes("epoch_blocks_percent")) {
         h.push({
@@ -1351,86 +928,23 @@ export default {
         value: "epoch_blocks",
       });
 
-      if (!this.groupPools) {
-        if (this.viewcolumns.includes("height")) {
-          h.push({
-            text: this.$t("global.height"),
-            align: "center",
-            value: "height",
-            sortable: true,
-            filterable: false,
-            divider: true,
-          });
-        }
-        hl.push({
+      if (this.viewcolumns.includes("height")) {
+        h.push({
           text: this.$t("global.height"),
+          align: "center",
           value: "height",
+          sortable: true,
+          filterable: false,
+          divider: true,
         });
       }
-      if (this.viewcolumns.includes("livestakepercent")) {
-        if (this.groupPools) {
-          h.push({
-            text: this.$t("global.liveStake") + " %",
-            align: "center",
-            sortable: true,
-            value: "grouplivestakepercent",
-            filterable: false,
-          });
-        } else {
-          h.push({
-            text: this.$t("global.liveStake") + " %",
-            align: "center",
-            sortable: true,
-            value: "livestakepercent",
-            filterable: false,
-          });
-        }
-      }
-      if (this.groupPools) {
-        hl.push({
-          text: this.$t("global.liveStake") + " %",
-          value: "grouplivestakepercent",
-        });
-      } else {
-        hl.push({
-          text: this.$t("global.liveStake") + " %",
-          value: "livestakepercent",
-        });
-      }
+      hl.push({
+        text: this.$t("global.height"),
+        value: "height",
+      });
+      // h.push({ text: 'Lifetime Rewards (₳)', align: 'right', value: 'lifetimerewards', filterable: false, })
 
-      if (!this.groupPools) {
-        if (this.viewcolumns.includes("livestake")) {
-          h.push({
-            value: "livestake",
-            sortable: true,
-            align: "right",
-            text: this.$t("global.liveStake") + " (₳)",
-            divider: true,
-          });
-        }
-        hl.push({
-          text: this.$t("global.liveStake"),
-          value: "livestake",
-        });
-      } else {
-        if (this.viewcolumns.includes("grouplivestake")) {
-          h.push({
-            value: "grouplivestake",
-            sortable: true,
-            align: "right",
-            text: this.$t("global.liveStake") + " (₳)",
-            divider: true,
-          });
-        }
-        hl.push({
-          text: this.$t("global.liveStake"),
-          value: "grouplivestake",
-        });
-      }
-      if (!this.groupPools) {
-        // h.push({ text: 'Lifetime Rewards (₳)', align: 'right', value: 'lifetimerewards', filterable: false, })
-
-        if (this.viewcolumns.includes("sixros")) {
+      if (this.viewcolumns.includes("sixros")) {
           h.push({
             text: this.$t("global.sixros"),
             align: "center",
@@ -1478,7 +992,6 @@ export default {
           text: this.$t("global.lifetime_performance"),
           value: "lifetime_performance",
         });
-      }
       // h.push({ text: 'Lifetime Blocks %', align: 'center', value: 'blocks2epochspercent', filterable: false })
       if (this.viewcolumns.includes("life_blocks")) {
         h.push({
@@ -1492,14 +1005,12 @@ export default {
         text: this.$t("global.lifetimeBlocks"),
         value: "life_blocks",
       });
-      if (!this.groupPools) {
-        h.push({
-          value: "actions",
-          sortable: false,
-          align: "end",
-          text: this.$t("global.actions"),
-        });
-      }
+      h.push({
+        value: "actions",
+        sortable: false,
+        align: "end",
+        text: this.$t("global.actions"),
+      });
       return {
         tableheaders: h,
         listheaders: hl,
@@ -1525,11 +1036,6 @@ export default {
 
     if (this.viewcolumns == null)
       this.viewcolumns = [
-        "groupname",
-        "poolcount",
-        "grouplivestake",
-        "grouppoolpledge",
-        "grouproi",
         "favorite",
         "ticker",
         "poolcost",
@@ -1537,11 +1043,9 @@ export default {
         "poolpledge",
         "epoch_blocks",
         "height",
-        "livestake",
         "life_blocks",
-        "lifetimeroi",
+        "twelveros",
       ];
-    if (this.groupPools == null) this.groupPools = false;
   },
   methods: {
     async initializedata() {
@@ -1623,7 +1127,6 @@ export default {
     setSearch: function (searchFor) {
       this.resetFilters();
       this.search = searchFor;
-      this.groupPools = false;
     },
     genesisloaded: function () {
       this.genesisLoaded = true;

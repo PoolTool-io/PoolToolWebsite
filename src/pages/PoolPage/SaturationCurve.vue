@@ -188,8 +188,8 @@ export default {
           if (kvals[kindex] == 500) {
             retdata["labels"].push(i);
             if (
-              this.pool.livestake > i * 1e12 &&
-              this.pool.livestake <= (i + 0.5) * 1e12
+              this.pool.blockstake > i * 1e12 &&
+              this.pool.blockstake <= (i + 0.5) * 1e12
             ) {
               hereline.push(1);
             } else {

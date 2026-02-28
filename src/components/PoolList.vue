@@ -195,9 +195,6 @@
         </v-tooltip>
       </span>
     </template>
-    <template #[`item.groupnameview`]="{ item }">
-      {{ item.groupnameview }}
-    </template>
     <template #[`item.groupname`]="{ item }">
       <v-text-field
         class=""
@@ -529,33 +526,6 @@
 
     <template #[`item.lifetime_performance`]="{ item }">
       <span>{{ item.lifetime_performance | fpercent }}</span>
-    </template>
-
-    <template #[`item.livestakepercent`]="{ item }">
-      {{
-        item.live_stake
-          | renderstakepercent(genesis.total_staked)
-          | numFormat("0.000%")
-      }}
-    </template>
-
-    <template #[`item.grouplivestakepercent`]="{ item }">
-      {{
-        item.grouplivestake
-          | renderstakepercent(genesis.total_staked)
-          | numFormat("0.000%")
-      }}
-    </template>
-
-    <template #[`item.livestake`]="{ item }">
-      <span :class="paintred(item.live_stake)">{{
-        item.live_stake | toada | numFormat("0,0.00a") | zeronull
-      }}</span>
-    </template>
-    <template #[`item.grouplivestake`]="{ item }">
-      <span :class="paintred(item.grouplivestake, item.poolcount)">{{
-        item.grouplivestake | toada | numFormat("0,0.0a") | zeronull
-      }}</span>
     </template>
 
     <template #[`item.favorite`]="{ item }">

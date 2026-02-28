@@ -394,7 +394,8 @@ export default {
       if (typeof this.genesis.epoch == "undefined") {
         return 10;
       }
-      return this.genesis.epoch - (this.network == "Mainnet" ? 213 : 114);
+      var total = this.genesis.epoch - (this.network == "Mainnet" ? 213 : 114);
+      return Math.min(total, 29);
     },
     ...mapPreferences({
       poolepochsPerPage: {
@@ -408,7 +409,8 @@ export default {
       },
     }),
     poolhistory: function () {
-      var labels = this.merged_history.map((a) => a.epoch);
+      var last30 = this.merged_history.slice(-30);
+      var labels = last30.map((a) => a.epoch);
       var stakehistory = {
         type: "line",
         label: this.$t("global.stake"),
@@ -416,7 +418,7 @@ export default {
 
         borderWidth: 2,
         fill: true,
-        data: this.merged_history.map((a) => a.blockstake),
+        data: last30.map((a) => a.blockstake),
         order: 3,
         yAxisID: "y",
       };
@@ -427,7 +429,7 @@ export default {
         backgroundColor: "rgba(251,154,153,0.9)",
         borderWidth: 2,
         clip: 0,
-        data: this.merged_history.map((a) => a.ros),
+        data: last30.map((a) => a.ros),
         order: 2,
 
         yAxisID: "y1",
@@ -448,7 +450,7 @@ export default {
         yAxisID: "y1",
       };
       var trendline = [];
-      for (const epochdata of this.merged_history.filter(
+      for (const epochdata of this.merged_history.slice(-30).filter(
         (a) => a.epoch < this.genesis.epoch
       )) {
         trendline.push(epochdata.ros);

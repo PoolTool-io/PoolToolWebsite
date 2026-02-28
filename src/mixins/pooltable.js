@@ -142,24 +142,6 @@ export default {
                         }
                         /* eslint-disable no-unreachable */
                         break
-                    case "grouplivestake":
-                    case "grouplivestakepercent":
-                        if (!isDesc[0]) {
-                            return parseInt(a['grouplivestake'] ) < parseInt(b['grouplivestake']) ? -1 : 1;
-                        } else {
-                            return parseInt(b['grouplivestake']) < parseInt(a['grouplivestake']) ? -1 : 1;
-                        }
-                        /* eslint-disable no-unreachable */
-                        break
-                    case 'groupblockstake':
-                    case 'groupactivestakepercent':
-                        if (!isDesc[0]) {
-                            return parseInt(a['groupblockstake'] ) < parseInt(b['groupblockstake']) ? -1 : 1;
-                        } else {
-                            return parseInt(b['groupblockstake']) < parseInt(a['groupblockstake']) ? -1 : 1;
-                        }
-                        /* eslint-disable no-unreachable */
-                        break
                     case "blockstake":
                     case "activestakepercent":
                         if (!isDesc[0]) {

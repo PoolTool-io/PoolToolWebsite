@@ -693,14 +693,6 @@ export default {
       });
 
       h.push({
-        value: "livestake",
-        sortable: true,
-        align: "right",
-        text: this.$t("global.liveStake") + " (₳)",
-        divider: true,
-      });
-
-      h.push({
         value: "life_blocks",
         sortable: true,
         align: "end",

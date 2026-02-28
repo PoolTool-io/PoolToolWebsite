@@ -1375,10 +1375,11 @@ export default {
       if (typeof this.genesis.epoch == "undefined") {
         return 10;
       }
-      return this.genesis.epoch - 213;
+      return Math.min(this.genesis.epoch - 213, 29);
     },
     addresshistory: function () {
-      var labels = this.ahist.map((a) => a.epoch);
+      var last30 = this.ahist.slice(-30);
+      var labels = last30.map((a) => a.epoch);
       var stakehistory = {
         type: "line",
         label: this.$t("global.stake"),
@@ -1386,7 +1387,7 @@ export default {
 
         borderWidth: 2,
         fill: true,
-        data: this.ahist.map((a) => a.amount),
+        data: last30.map((a) => a.amount),
         order: 3,
         yAxisID: "yAxes",
       };
@@ -1397,7 +1398,7 @@ export default {
         backgroundColor: "rgba(251,154,153,0.9)",
         borderWidth: 2,
         clip: 0,
-        data: this.ahist.map((a) =>
+        data: last30.map((a) =>
           a.amount > 0
             ? Math.pow(
                 (this.includeOperatorRewards
@@ -1429,7 +1430,7 @@ export default {
         yAxisID: "yAxes1",
       };
       var trendline = [null];
-      for (const epochdata of this.ahist) {
+      for (const epochdata of this.ahist.slice(-30)) {
         if (
           epochdata.rewardDate != null ||
           this.genesis.epoch - 1 == epochdata.epoch

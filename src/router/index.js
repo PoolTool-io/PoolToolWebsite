@@ -14,7 +14,6 @@ const routes = [
      { path: 'epochs', name: 'poolepochs', component: () => import(/* webpackChunkName: "poolpage" */ '../pages/PoolPage/PoolPageHistory.vue') },
      { path: 'manage', name: 'poolmanagement', component: () => import(/* webpackChunkName: "poolpage" */ '../pages/PoolPage/PoolManage.vue') },
      { path: 'admin', name: 'pooladmin', component: () => import(/* webpackChunkName: "poolpage" */ '../pages/PoolPage/PoolAdmin.vue') },
-     { path: 'delegators', name: 'pooldelegators', component: () => import(/* webpackChunkName: "poolpage" */ '../pages/PoolPage/PoolDelegators.vue') },
      { path: 'blocks', name: 'poolblocks', component: () => import(/* webpackChunkName: "poolpage" */ '../pages/PoolPage/PoolBlocks.vue') },
      { path: 'orphans', name: 'poolorphans', component: () => import(/* webpackChunkName: "poolpage" */ '../pages/PoolPage/PoolOrphans.vue') },
      { path: 'curve', name: 'curve', component: () => import(/* webpackChunkName: "poolpage" */ '../pages/PoolPage/SaturationCurve.vue') },
