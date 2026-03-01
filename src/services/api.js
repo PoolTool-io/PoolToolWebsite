@@ -133,12 +133,9 @@ export function getStakeHist(address) {
   return api.get(`/api/stake_hist/${address}`);
 }
 
-export function pivotRewards(stakeKey, startEpoch, endEpoch) {
-  return api.post("/api/pivotrewards", {
-    stake_key: stakeKey,
-    start_epoch: startEpoch,
-    end_epoch: endEpoch,
-  });
+export function pivotRewards(stakeKeys) {
+  const keys = Array.isArray(stakeKeys) ? stakeKeys : [stakeKeys];
+  return api.post("/api/pivotrewards", { stake_keys: keys });
 }
 
 // ── Health ────────────────────────────────────────────

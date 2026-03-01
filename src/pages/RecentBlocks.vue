@@ -179,6 +179,10 @@ export default {
         this.loading = true;
         try {
           const epoch = this.$store.getters.getGenesis.epoch;
+          if (!epoch) {
+            this.loading = false;
+            return;
+          }
           const { data } = await getBlocks(epoch);
           const raw = data || {};
           if (this.search == "") {
@@ -229,7 +233,7 @@ export default {
       return this.$store.getters.getGenesis;
     },
     refetch_watch: function () {
-      return this.search + this.network;
+      return this.search + this.network + (this.genesis ? this.genesis.epoch : "");
     },
     colorcompetition() {
       return (item) => {

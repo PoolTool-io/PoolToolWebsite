@@ -232,10 +232,12 @@ export default {
     loadFavoriteAddressData: async function () {
       if (this.viewepoch != null) {
         this.livedatafaves = {};
-        try {
-          await pivotRewards(this.favoriteaddrs);
-        } catch (e) {
-          console.error("Failed to trigger pivotRewards for favorites", e);
+        if (this.favoriteaddrs && this.favoriteaddrs.length) {
+          try {
+            await pivotRewards(this.favoriteaddrs);
+          } catch (e) {
+            console.error("Failed to trigger pivotRewards for favorites", e);
+          }
         }
 
         for (const address of this.favoriteaddrs) {
