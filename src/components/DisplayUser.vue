@@ -28,7 +28,7 @@
 </template>
 
 <script>
-import { db } from "@/firebase";
+import { getUser } from "@/services/api";
 export default {
   props: ["displayUserId", "poolId"],
   data() {
@@ -37,21 +37,23 @@ export default {
     };
   },
   asyncComputed: {
-    userdetails() {
+    async userdetails() {
       var getusers = this.$store.getters.getDisplayUsers;
       if (typeof getusers[this.displayUserId] != "undefined") {
         return getusers[this.displayUserId];
       } else {
-        db.ref(this.network + "/users/pubMeta")
-          .child(this.displayUserId)
-          .once("value")
-          .then((snapshot) => {
-            this.$store.commit("setDisplayUser", {
-              userid: this.displayUserId,
-              data: snapshot.val(),
-            });
-            return snapshot.val();
+        try {
+          const { data } = await getUser(this.displayUserId);
+          const pubMeta = (data && data.pubMeta) || {};
+          this.$store.commit("setDisplayUser", {
+            userid: this.displayUserId,
+            data: pubMeta,
           });
+          return pubMeta;
+        } catch (e) {
+          console.error("Failed to fetch user details", e);
+          return null;
+        }
       }
     },
   },

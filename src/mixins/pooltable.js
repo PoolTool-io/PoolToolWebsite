@@ -1,5 +1,5 @@
 
-import { db } from "@/firebase";
+import api from "@/services/api";
 export default {
     name: 'Pooltable',
 
@@ -51,19 +51,21 @@ export default {
         }
     },
     methods: {
-        updatePoolField(field,item, newvalue) {
+        async updatePoolField(field,item, newvalue) {
             var writename="xxxx"
-            var writetable="xxxx"
             switch(field) {
                 case 'groupname':
                     writename="g"
-                    writetable="stake_pools"
                 break;
             }
             if (newvalue == item[field]) return
             var variables = {}
             variables[writename] = newvalue
-            db.ref(this.network + "/"+writetable+"/" + item.poolpubkey).update(variables); //
+            try {
+                await api.put(`/api/pool/${item.poolpubkey}/update`, variables);
+            } catch (e) {
+                console.error("Failed to update pool field", e);
+            }
         },
 
         

@@ -778,9 +778,8 @@ import add from "date-fns/add";
 import parseISO from "date-fns/parseISO";
 import format from "date-fns/format";
 const Buffer = require("buffer/").Buffer;
-import { db } from "@/firebase";
+import { getExchangeRates, getStakeHist, pivotRewards } from "@/services/api";
 
-// import QrcodeVue from "qrcode.vue";
 import numeral from "numeral";
 let { bech32 } = require("bech32");
 import { mapPreferences } from "vue-preferences";
@@ -937,13 +936,14 @@ export default {
     },
   },
   mounted() {},
-  created() {
-    this.$rtdbBind(
-      "epoch_exchange_rates",
-      db.ref(this.network + "/epoch_exchange_rates")
-    ).then(() => {
-      this.binding_rates_finished = true;
-    });
+  async created() {
+    try {
+      const { data } = await getExchangeRates();
+      this.epoch_exchange_rates = data || {};
+    } catch (e) {
+      console.error("Failed to fetch exchange rates", e);
+    }
+    this.binding_rates_finished = true;
     if (this.favoriteaddr == null) this.favoriteaddr = [];
   },
   data: function () {
@@ -1649,28 +1649,24 @@ export default {
   watch: {
     refetch_watch: {
       immediate: true,
-      handler() {
+      async handler() {
         if (
           this.binding_rates_finished &&
           typeof this.$route.params.address !== "undefined" &&
           this.genesis.epoch !== "undefined" &&
           /[a-f0-9]{56}/gim.test(this.$route.params.address)
         ) {
-          this.axios({
-            method: "post",
-            url: "https://api.pooltool.io/v1/pivotrewards",
-            data: {
-              stake_key: this.$route.params.address,
-            },
-            headers: {},
-          });
-          this.$rtdbBind(
-            "stake_hist",
-            db
-              .ref(this.network + "/stake_hist/" + this.$route.params.address)
-              .orderByKey()
-            // .limitToLast(20)
-          );
+          try {
+            await pivotRewards(this.$route.params.address);
+          } catch (e) {
+            console.error("Failed to trigger pivotRewards", e);
+          }
+          try {
+            const { data } = await getStakeHist(this.$route.params.address);
+            this.stake_hist = data || {};
+          } catch (e) {
+            console.error("Failed to fetch stake history", e);
+          }
         }
       },
     },

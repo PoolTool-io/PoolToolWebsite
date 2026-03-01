@@ -73,7 +73,7 @@
 </template>
 
 <script>
-import { db } from "@/firebase";
+import api from "@/services/api";
 
 export default {
   mixins: [],
@@ -90,41 +90,39 @@ export default {
   watch: {
     poolnetwork: {
       immediate: true,
-      handler() {
-        console.log(this.poolnetwork);
+      async handler() {
         if (this.poolnetwork != "") {
-          console.log("binding");
-          this.$rtdbBind(
-            "delegatorUpdate",
-            db
-              .ref(this.network + "/admin_settings/delegator_update/")
-              .child(this.pool.poolpubkey)
-          );
-          console.log(this.delegatorUpdate);
+          try {
+            const { data } = await api.get(`/api/admin/delegator_update/${this.pool.poolpubkey}`);
+            this.delegatorUpdate = data || {};
+          } catch (e) {
+            this.delegatorUpdate = {};
+          }
         }
       },
     },
   },
 
   methods: {
-    updatedelegatorUpdate: function (event) {
-      if (event) {
-        db.ref(this.network + "/admin_settings/delegator_update").update({
-          [this.pool.poolpubkey]: true,
-        });
-      } else {
-        db.ref(this.network + "/admin_settings/delegator_update")
-          .child(this.pool.poolpubkey)
-          .remove();
+    updatedelegatorUpdate: async function (event) {
+      try {
+        if (event) {
+          await api.put(`/api/admin/delegator_update/${this.pool.poolpubkey}`, { value: true });
+        } else {
+          await api.delete(`/api/admin/delegator_update/${this.pool.poolpubkey}`);
+        }
+      } catch (e) {
+        console.error("Failed to update delegator update", e);
       }
     },
-    updatePoolField(field, newvalue) {
+    async updatePoolField(field, newvalue) {
       var w = {};
-
       w[field] = newvalue;
-      console.log(this.network + "/stake_pools/" + this.pool.poolpubkey);
-      console.log(w);
-      db.ref(this.network + "/stake_pools/" + this.pool.poolpubkey).update(w); //
+      try {
+        await api.put(`/api/pool/${this.pool.poolpubkey}/update`, w);
+      } catch (e) {
+        console.error("Failed to update pool field", e);
+      }
     },
   },
 

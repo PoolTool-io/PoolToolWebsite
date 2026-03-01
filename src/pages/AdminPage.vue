@@ -306,7 +306,7 @@
 </template>
 
 <script>
-import { db } from "@/firebase";
+import api from "@/services/api";
 export default {
   components: {
     UserManagement: () => import("@/components/UserManagement"),
@@ -349,10 +349,20 @@ export default {
       alertnote: "",
     };
   },
-  created() {
+  async created() {
     this.$emit("isLoaded", true);
-    this.$rtdbBind("portfolios_raw", db.ref(this.network + "/portfolios"));
-    this.$rtdbBind("stats_labels_raw", db.ref(this.network + "/stats_labels"));
+    try {
+      const portResp = await api.get("/api/portfolios");
+      this.portfolios_raw = portResp.data || {};
+    } catch (e) {
+      console.error("Failed to fetch portfolios", e);
+    }
+    try {
+      const statsResp = await api.get("/api/stats_labels");
+      this.stats_labels_raw = statsResp.data || {};
+    } catch (e) {
+      console.error("Failed to fetch stats labels", e);
+    }
   },
   computed: {
     // portfolios_raw: function () {
@@ -402,23 +412,23 @@ export default {
     },
   },
   methods: {
-    updateStatsItem: function (key, item, data) {
-      console.log(data);
+    updateStatsItem: async function (key, item, data) {
       var w = {};
       w[item] = data;
-
-      db.ref(this.network + "/stats_labels")
-        .child(key)
-        .update(w); //
+      try {
+        await api.put(`/api/stats_labels/${key}`, w);
+      } catch (e) {
+        console.error("Failed to update stats item", e);
+      }
     },
-    deleteStatsItem: function (item) {
-      console.log(item);
-      var w = {};
-      w[item] = null;
-      db.ref(this.network + "/stats_labels").update(w); //
+    deleteStatsItem: async function (item) {
+      try {
+        await api.delete(`/api/stats_labels/${item}`);
+      } catch (e) {
+        console.error("Failed to delete stats item", e);
+      }
     },
-    addStatsNewItem: function () {
-      //make sure new item adheres to requirements.  all alpha, no spaces or other punctuation.
+    addStatsNewItem: async function () {
       if (!this.$refs.newstatsitem.validate()) {
         return;
       }
@@ -433,44 +443,48 @@ export default {
         units: "ADA",
         group: "TBD",
       };
-      db.ref(this.network + "/stats_labels").update(w); //
+      try {
+        await api.put("/api/stats_labels", w);
+      } catch (e) {
+        console.error("Failed to add stats item", e);
+      }
       this.newstatsitemtitle = null;
     },
-    clearAdminMessage: function (target) {
+    clearAdminMessage: async function (target) {
       this.alertnote = "";
       this.alertnotetitle = "";
       var w = {
         message: "",
         title: "",
       };
-      if (target == "web") {
-        db.ref(this.network + "/admin_message/web").update(w); //
-      } else {
-        db.ref(this.network + "/admin_message").update(w); //
+      try {
+        const path = target == "web" ? "/api/admin_message/web" : "/api/admin_message";
+        await api.put(path, w);
+      } catch (e) {
+        console.error("Failed to clear admin message", e);
       }
     },
-    updateAdminMessage: function (target) {
+    updateAdminMessage: async function (target) {
       var w = {
         message: this.alertnote,
         title: this.alertnotetitle,
       };
-      if (target == "web") {
-        db.ref(this.network + "/admin_message/web").update(w); //
-      } else {
-        db.ref(this.network + "/admin_message").update(w); //
+      try {
+        const path = target == "web" ? "/api/admin_message/web" : "/api/admin_message";
+        await api.put(path, w);
+      } catch (e) {
+        console.error("Failed to update admin message", e);
       }
     },
-    setPortValue: function (id, item, value) {
-      console.log(id);
-      console.log(item);
-      console.log(value);
+    setPortValue: async function (id, item, value) {
       if (!value) value = false;
       var setval = {};
       setval[item] = value;
-
-      db.ref(this.network + "/portfolios")
-        .child(id)
-        .update(setval); //
+      try {
+        await api.put(`/api/portfolios/${id}`, setval);
+      } catch (e) {
+        console.error("Failed to set portfolio value", e);
+      }
     },
   },
 };

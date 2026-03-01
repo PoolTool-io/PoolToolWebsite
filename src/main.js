@@ -12,7 +12,7 @@ import axios from "axios";
 import VueAxios from "vue-axios";
 import "./registerServiceWorker";
 import VueClipboards from "vue-clipboards";
-import { rtdbPlugin } from "vuefire";
+// rtdbPlugin removed — replaced by PoolTool API/WS services
 import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css';
 // STYLES
 import "./styles/main.scss";
@@ -52,7 +52,7 @@ Vue.filter("tosmallada", function(value) {
 });
 
 Vue.use(VueAxios, axios);
-Vue.use(rtdbPlugin);
+// Vue.use(rtdbPlugin); — removed, using PoolTool API/WS
 Vue.filter("ellipsiscrypto", function(item, qty = 16) {
   if (item != null) {
     if (item.length > qty) {

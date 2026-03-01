@@ -76,7 +76,7 @@
 
 <script>
 import { formatInTimeZone } from "date-fns-tz";
-import { db } from "@/firebase";
+import { getPoolAwards } from "@/services/api";
 export default {
   props: ["nightmode", "pool", "userId", "genesis"],
   data: function () {
@@ -130,18 +130,18 @@ export default {
   },
   watch: {
     refetch_watch: {
-      // call it upon creation too
       immediate: true,
-      handler() {
+      async handler() {
         if (typeof this.pool !== "undefined") {
-          this.$rtdbBind(
-            "awards_itn_raw",
-            db.ref(this.network + "/awards/itn/" + this.pool.ticker)
-          );
-          this.$rtdbBind(
-            "awards_raw",
-            db.ref(this.network + "/awards/cardano/" + this.pool.poolpubkey)
-          );
+          try {
+            const { data } = await getPoolAwards(this.pool.poolpubkey);
+            if (data) {
+              this.awards_itn_raw = data.itn || {};
+              this.awards_raw = data.cardano || {};
+            }
+          } catch (e) {
+            console.error("Failed to fetch pool awards", e);
+          }
         }
       },
     },

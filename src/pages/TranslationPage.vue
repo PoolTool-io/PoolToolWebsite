@@ -43,7 +43,7 @@ import validationMixin from "@/mixins/validationMixin";
 import translationEditItem from "@/components/translationEditItem";
 import { required } from "vuelidate/lib/validators";
 
-import { db } from "@/firebase";
+import api from "@/services/api";
 
 function flattenObj(obj, parent, res = {}) {
   for (let key in obj) {
@@ -209,15 +209,19 @@ export default {
       this.search = "";
     },
 
-    loadTranslation: function (locale) {
-      this.$rtdbBind(
-        "translations_raw_en",
-        db.ref(this.network + "/translations").child("en")
-      );
-      this.$rtdbBind(
-        "translations_raw",
-        db.ref(this.network + "/translations").child(locale)
-      );
+    loadTranslation: async function (locale) {
+      try {
+        const enResp = await api.get("/api/translations/en");
+        this.translations_raw_en = enResp.data || {};
+      } catch (e) {
+        console.error("Failed to fetch English translations", e);
+      }
+      try {
+        const localeResp = await api.get(`/api/translations/${locale}`);
+        this.translations_raw = localeResp.data || {};
+      } catch (e) {
+        console.error("Failed to fetch translations for " + locale, e);
+      }
     },
   },
 

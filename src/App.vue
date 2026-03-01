@@ -722,14 +722,16 @@
 <script>
 import numeral from "numeral";
 import { v4 as uuidv4 } from "uuid";
-import { db, messaging } from "./firebase";
 import { mdiThemeLightDark } from "@mdi/js";
-import "firebase/compat/messaging";
-import firebase from "firebase/compat/app";
-import "firebase/compat/auth";
 import { preference } from "vue-preferences";
 import { mapPreferences } from "vue-preferences";
 import update from "@/mixins/update";
+import {
+  login as apiLogin,
+  register as apiRegister,
+  startVerification,
+  checkVerification,
+} from "@/services/api";
 
 //import CatalystPromoMarloweHub from "@/components/CatalystPromo";
 
@@ -765,16 +767,13 @@ export default {
   name: "App",
   mixins: [update],
   async beforeCreate() {
-    var self = this;
-    firebase.auth().onAuthStateChanged(function (user) {
-      if (user) {
-        self.onAuthenticated(user);
-        // User is signed in.
-      } else {
-        self.onUnAuthenticated();
-        // No user is signed in.
-      }
-    });
+    // Check if we have a saved session (userId in localStorage)
+    const savedUserId = localStorage.getItem("pt_user_id");
+    if (savedUserId) {
+      this.$store.commit("setUserId", savedUserId);
+      this.$store.commit("setIsSignedIn", true);
+      this.$store.dispatch("bindUserData");
+    }
   },
   created: function () {
     if (this.currency == null) this.currency = "usd";
@@ -784,38 +783,15 @@ export default {
     setInterval(
       function () {
         var self = this;
-        if (this.checkresetstatus && this.address != null) {
-          this.axios({
-            method: "get",
-            url:
-              "https://api.pooltool.io/v1/auth/forgotpassword/" + this.address,
-            headers: {
-              "x-api-key": "26969ceb-d2d0-46df-9813-852ed4bde2fe",
-            },
-          }).then(function (response) {
-            self.processCheckResetStatus(response.data);
-          });
-        }
-
         if (
           this.checkverifystatus == true &&
-          this.verifyuserid != null &&
           this.address != null
         ) {
-          const params = new URLSearchParams({
-            userId: this.verifyuserid,
-          });
-
-          this.axios({
-            method: "get",
-            url: "https://api.pooltool.io/v1/verification/" + this.address,
-            params,
-            headers: {
-              "x-api-key": "26969ceb-d2d0-46df-9813-852ed4bde2fe",
-            },
-          }).then(function (response) {
-            self.processCheckVerifyStatus(response.data);
-          });
+          checkVerification(this.address)
+            .then(function (response) {
+              self.processCheckVerifyStatus(response.data);
+            })
+            .catch(() => {});
         }
       }.bind(this),
       10000
@@ -830,14 +806,11 @@ export default {
     chillin: {
       handler(newdata, olddata) {
         if (!newdata && olddata) {
-          //we are transitioning from chillin to not chillin.  prompt for reload
           this.reloadPoolTool = true;
           this.dialog = false;
-          db.goOffline();
         }
         if (newdata && !olddata) {
           this.isLoading = false;
-
           this.isLoaded = true;
         }
       },
@@ -846,108 +819,15 @@ export default {
       handler(newdata) {
         if (newdata) {
           console.log("inactive");
-
-          db.goOffline();
         } else {
           console.log("active");
-          db.goOnline();
         }
       },
     },
     genesis: {
       immediate: true,
-      handler(newdata, olddata) {
-        var self = this;
-        if (
-          typeof newdata != "undefined" &&
-          typeof newdata.epoch != "undefined" &&
-          newdata.epoch != null &&
-          newdata.epoch > 100 &&
-          typeof olddata != "undefined" &&
-          (olddata.epoch == null || olddata.epoch != newdata.epoch)
-        ) {
-          this.getJSON(
-            "https://s3-us-west-2.amazonaws.com/data.pooltool.io/" +
-              this.network +
-              "/stake_pool_columns/" +
-              newdata.epoch +
-              "/stake.json?t=" +
-              Date.now(),
-            function (err, thisdata) {
-              if (err == null) {
-                self.$store.commit("activestake", thisdata);
-              }
-            }
-          );
-          this.getJSON(
-            "https://s3-us-west-2.amazonaws.com/data.pooltool.io/" +
-              this.network +
-              "/stake_pool_columns/" +
-              (newdata.epoch - 2) +
-              "/stake.json?t=" +
-              Date.now(),
-            function (err, thisdata) {
-              if (err == null) {
-                self.$store.commit("rewardstake", thisdata);
-              }
-            }
-          );
-          this.getJSON(
-            "https://s3-us-west-2.amazonaws.com/data.pooltool.io/" +
-              this.network +
-              "/stake_pool_columns/" +
-              (newdata.epoch - 2) +
-              "/rewards.json?t=" +
-              Date.now(),
-            function (err, thisdata) {
-              if (err == null) {
-                self.$store.commit("rewards", thisdata);
-              }
-            }
-          );
-        }
-        if (
-          typeof newdata != "undefined" &&
-          typeof olddata != "undefined" &&
-          newdata.pool_forecast_calculated_epoch !=
-            olddata.pool_forecast_calculated_epoch &&
-          newdata.pool_forecast_calculated_epoch > 100
-        ) {
-          this.getJSON(
-            "https://s3-us-west-2.amazonaws.com/data.pooltool.io/" +
-              this.network +
-              "/stake_pool_columns/" +
-              newdata.pool_forecast_calculated_epoch +
-              "/rewards.json?t=" +
-              Date.now(),
-            function (err, thisdata) {
-              if (err == null) {
-                self.$store.commit("rewardsnp1", thisdata);
-              }
-            }
-          );
-        }
-        if (
-          typeof newdata != "undefined" &&
-          typeof olddata != "undefined" &&
-          newdata.pool_actuals_calculated_epoch !=
-            olddata.pool_actuals_calculated_epoch &&
-          newdata.pool_actuals_calculated_epoch > 100
-        ) {
-          this.getJSON(
-            "https://s3-us-west-2.amazonaws.com/data.pooltool.io/" +
-              this.network +
-              "/stake_pool_columns/" +
-              newdata.pool_actuals_calculated_epoch +
-              "/rewards.json?t=" +
-              Date.now(),
-            function (err, thisdata) {
-              if (err == null) {
-                self.$store.commit("rewards", thisdata);
-              }
-            }
-          );
-        }
+      handler() {
+        // S3 data files are no longer needed — data comes from API
       }
     },
   },
@@ -1112,17 +992,7 @@ export default {
       // this.requestPermission = Notification.permission;
     },
     initializeFirebase: function () {
-      if (firebase.messaging.isSupported()) {
-        messaging.onMessage(function (payload) {
-          const notificationTitle = payload.notification.title;
-          const notificationOptions = {
-            body: payload.notification.body,
-            icon: "/img/icons/android-chrome-192x192.png",
-          };
-          //console.log("Message received", payload);
-          new Notification(notificationTitle, notificationOptions);
-        });
-      }
+      // Firebase messaging removed — notifications via Telegram bot
     },
     processCheckResetStatus: function (response) {
       if ("status" in response) {
@@ -1214,69 +1084,30 @@ export default {
     resetPassword: function () {
       this.confirmcode = null;
       this.authLoading = true;
+      // Password reset uses the same verification flow in the new API
       var self = this;
-      this.axios({
-        method: "post",
-        url: "https://api.pooltool.io/v1/auth/forgotpassword",
-        data: {
-          address: this.address,
-          password: this.password,
-        },
-        headers: {
-          "x-api-key": "26969ceb-d2d0-46df-9813-852ed4bde2fe",
-        },
-      })
+      startVerification(this.address, uuidv4(), this.password)
         .then(function (response) {
-          if ("status" in response.data) {
-            if (response.data.status == "verified") {
-              self.verificationamount = numeral(
-                response.data.paymentAmount / 1e6
-              ).format("0,0.000000");
-              self.verificationtoaddress = response.data.paymentToAddress;
-              self.authform = "sendada";
-              self.verifymessage = "Verification Transaction already sent";
-              self.verifymessagecolor = "success";
-              self.authLoading = false;
-              self.checkresetstatus = false;
-              self.showloginbutton = true;
-              self.showclosebutton = false;
-            } else {
-              self.verificationamount = numeral(
-                response.data.paymentAmount / 1e6
-              ).format("0,0.000000");
-              self.verificationtoaddress = response.data.paymentToAddress;
-              self.authform = "sendada";
-              self.verifymessage =
-                "Waiting to receive verification transaction";
-              self.verifymessagecolor = "success";
-              self.authLoading = false;
-              self.checkresetstatus = true;
-              self.showloginbutton = false;
-              self.showclosebutton = false;
-            }
+          if (response.data.status === "pending") {
+            self.verificationamount = numeral(
+              response.data.payment_amount / 1e6
+            ).format("0,0.000000");
+            self.verificationtoaddress = response.data.payment_address;
+            self.authform = "sendada";
+            self.verifymessage = "Waiting to receive verification transaction";
+            self.verifymessagecolor = "success";
+            self.authLoading = false;
+            self.checkverifystatus = true;
           } else {
-            self.checkresetstatus = false;
             self.loginalertcolor = "error";
-            self.loginalertmessage = "Something went wrong.  Please try again.";
+            self.loginalertmessage = "Something went wrong. Please try again.";
             self.authLoading = false;
           }
         })
-        .catch((error) => {
-          console.log(error);
-          if (error.response.status == 400) {
-            //address already registered but not verified
-            self.checkresetstatus = false;
-            self.loginalertmessage = "Invalid Address or Password";
-            self.loginalertcolor = "error";
-            self.authLoading = false;
-          } else if (error.response.status == 404) {
-            self.checkresetstatus = false;
-            self.loginalertcolor = "error";
-            self.loginalertmessage =
-              "There is no user registered with this address";
-            self.authLoading = false;
-          }
-          console.log(error.response.status);
+        .catch(() => {
+          self.loginalertcolor = "error";
+          self.loginalertmessage = "Invalid Address or Password";
+          self.authLoading = false;
         });
     },
     enterConfirmCode: function () {
@@ -1289,152 +1120,109 @@ export default {
     signUp: function () {
       this.authLoading = true;
       var self = this;
-      //generate a new uuid
-      if (this.isSignedIn) {
-        this.verifyuserid = this.userId;
-      } else {
-        this.verifyuserid = uuidv4();
-      }
 
-      this.axios({
-        method: "post",
-        url: "https://api.pooltool.io/v1/verification/" + this.address,
-        data: {
-          userId: this.verifyuserid,
-          password: this.password,
-        },
-        headers: {
-          "x-api-key": "26969ceb-d2d0-46df-9813-852ed4bde2fe",
-        },
-      })
-        .then(function (response) {
-          if ("status" in response.data) {
-            if (response.data.status == "verified") {
-              console.log("verified");
-              self.authform = "sendada";
-              self.verifymessage = "Verified";
-              if (self.isSignedIn) {
-                self.showclosebutton = true;
-                self.showloginbutton = false;
-              } else {
-                self.showloginbutton = true;
-                self.showclosebutton = false;
-              }
-
-              self.verifymessagecolor = "info";
-
-              self.authLoading = false;
-              self.verificationtoaddress = "";
-              self.checkverifystatus = false;
-            } else {
-              console.log("pending");
-              self.verificationamount = numeral(
-                response.data.paymentAmount / 1e6
-              ).format("0,0.000000");
-              self.verificationtoaddress = response.data.paymentToAddress;
-              self.authform = "sendada";
-              self.verifymessage =
-                "Waiting to receive verification transaction";
-              self.verifymessagecolor = "success";
-              self.authLoading = false;
-              self.checkverifystatus = true;
-            }
-          } else {
-            self.checkverifystatus = false;
-            self.loginalertcolor = "error";
-            self.loginalertmessage = "Something went wrong.  Please try again.";
-            self.authLoading = false;
-          }
+      // First register the account, then start verification
+      apiRegister(this.address, this.password)
+        .then(function (regResp) {
+          self.verifyuserid = regResp.data.user_id;
+          return startVerification(self.address, self.verifyuserid, self.password);
         })
-        .catch((error) => {
-          if (error.response.status == 422) {
-            //address already registered but not verified
+        .then(function (response) {
+          if (response.data.status === "already_verified") {
             self.authform = "alreadyverified";
             self.loginalertmessage = "This address has already been verified";
             self.loginalertcolor = "success";
             self.showloginbutton = true;
             self.authLoading = false;
-            self.checkverifystatus = false;
-          }
-          if (error.response.status == 400) {
-            //address already registered but not verified
-
-            self.loginalertmessage = "This address is invalid";
-            self.loginalertcolor = "error";
-
+          } else if (response.data.status === "pending") {
+            self.verificationamount = numeral(
+              response.data.payment_amount / 1e6
+            ).format("0,0.000000");
+            self.verificationtoaddress = response.data.payment_address;
+            self.authform = "sendada";
+            self.verifymessage = "Waiting to receive verification transaction";
+            self.verifymessagecolor = "success";
             self.authLoading = false;
-            self.checkverifystatus = false;
+            self.checkverifystatus = true;
           }
-          console.log(error.response.status);
+        })
+        .catch((error) => {
+          const status = error.response ? error.response.status : 0;
+          if (status === 409) {
+            // Already registered — just start verification
+            self.verifyuserid = self.userId || uuidv4();
+            startVerification(self.address, self.verifyuserid, self.password)
+              .then((resp) => {
+                if (resp.data.status === "pending") {
+                  self.verificationamount = numeral(
+                    resp.data.payment_amount / 1e6
+                  ).format("0,0.000000");
+                  self.verificationtoaddress = resp.data.payment_address;
+                  self.authform = "sendada";
+                  self.verifymessage = "Waiting to receive verification transaction";
+                  self.verifymessagecolor = "success";
+                  self.checkverifystatus = true;
+                } else {
+                  self.authform = "alreadyverified";
+                  self.showloginbutton = true;
+                }
+                self.authLoading = false;
+              })
+              .catch(() => {
+                self.loginalertcolor = "error";
+                self.loginalertmessage = "Something went wrong. Please try again.";
+                self.authLoading = false;
+              });
+          } else {
+            self.loginalertcolor = "error";
+            self.loginalertmessage = status === 400
+              ? "This address is invalid"
+              : "Something went wrong. Please try again.";
+            self.authLoading = false;
+          }
         });
     },
     addressSignOut: function () {
-      firebase
-        .auth()
-        .signOut()
-        .then(() => {
-          // Sign-out successful.
-        })
-        .catch((error) => {
-          console.log(error);
-          // An error happened.
-        });
+      localStorage.removeItem("pt_user_id");
+      localStorage.removeItem("pt_token");
+      this.$store.commit("setUserId", null);
+      this.$store.commit("setIsSignedIn", false);
+      this.$store.dispatch("unbindUserData");
     },
     addressSignIn: function () {
       var self = this;
-      this.axios({
-        method: "post",
-        url: "https://api.pooltool.io/v1/auth/login",
-        data: {
-          address: this.address,
-          password: this.password,
-        },
-        headers: {
-          "x-api-key": "26969ceb-d2d0-46df-9813-852ed4bde2fe",
-        },
-      })
+      self.authLoading = true;
+      apiLogin(this.address, this.password)
         .then(function (response) {
-          self.showloginbutton = true;
-          if ("token" in response.data) {
-            firebase
-              .auth()
-              .signInWithCustomToken(response.data.token)
-              .then(() => {
-                self.dialog = false;
-                self.loginalertcolor = "info";
-                self.loginalertmessage = null;
-                self.authLoading = false;
-                self.password = null;
-                self.confirmcode = null;
-                self.checkverifystatus = false;
-              })
-              .catch((error) => {
-                console.log(error);
-                self.loginalertcolor = "error";
-                self.loginalertmessage =
-                  "Account not found or password incorrect.";
-                self.authLoading = false;
-                self.checkverifystatus = false;
-              });
+          if (response.data.success) {
+            const userId = response.data.user_id;
+            const token = response.data.token;
+            localStorage.setItem("pt_user_id", userId);
+            localStorage.setItem("pt_token", token);
+            self.$store.commit("setUserId", userId);
+            self.$store.commit("setIsSignedIn", true);
+            self.$store.dispatch("bindUserData");
+            self.dialog = false;
+            self.loginalertcolor = "info";
+            self.loginalertmessage = null;
+            self.authLoading = false;
+            self.password = null;
+            self.confirmcode = null;
+            self.checkverifystatus = false;
           } else {
             self.loginalertcolor = "error";
             self.loginalertmessage = "Account not found or password incorrect.";
             self.authLoading = false;
-            self.checkverifystatus = false;
           }
         })
         .catch((error) => {
-          if (error.response.status == 401) {
-            //address already registered but not verified
-            self.loginalertcolor = "error";
-            self.loginalertmessage = "Account not found or password incorrect.";
-            self.authLoading = false;
-          } else if (error.response.status == 400) {
-            self.loginalertcolor = "error";
-            self.loginalertmessage = "Invalid Address or Password.";
-            self.authLoading = false;
-          }
-          console.log(error.response.status);
+          const status = error.response ? error.response.status : 0;
+          self.loginalertcolor = "error";
+          self.loginalertmessage =
+            status === 401
+              ? "Account not found or password incorrect."
+              : "Invalid Address or Password.";
+          self.authLoading = false;
         });
     },
 
@@ -1448,23 +1236,26 @@ export default {
     loadTranslations(locale) {
       console.log(locale);
       this.locale = locale;
-
       this.isLoading = true;
       setDocumentLang(locale);
       setDocumentDirectionPerLocale(locale);
       this.$i18n.locale = locale;
-      db.ref(this.network + "/translations/en").once("value", (snapshot) => {
-        this.$i18n.setLocaleMessage("en", snapshot.val());
-        this.isLoading = false;
-      });
-      if (locale != "en") {
-        db.ref(this.network + "/translations/" + locale).once(
-          "value",
-          (snapshot) => {
-            this.$i18n.setLocaleMessage(locale, snapshot.val());
-            this.isLoading = false;
-          }
-        );
+
+      const api = require("@/services/api").default;
+      api.get("/api/translations/en")
+        .then((resp) => {
+          this.$i18n.setLocaleMessage("en", resp.data);
+          this.isLoading = false;
+        })
+        .catch(() => {
+          this.isLoading = false;
+        });
+      if (locale !== "en") {
+        api.get("/api/translations/" + locale)
+          .then((resp) => {
+            this.$i18n.setLocaleMessage(locale, resp.data);
+          })
+          .catch(() => {});
       }
     },
     Loaded() {
@@ -1474,11 +1265,10 @@ export default {
       this.dialog = false;
       this.$store.commit("setUserId", null);
       this.$store.commit("setIsSignedIn", false);
-
       this.$store.dispatch("unbindUserData");
     },
-    onAuthenticated(user) {
-      this.$store.commit("setUserId", user.uid);
+    onAuthenticated(userId) {
+      this.$store.commit("setUserId", userId);
       this.$store.commit("setIsSignedIn", true);
       this.dialog = false;
       this.$store.dispatch("bindUserData");

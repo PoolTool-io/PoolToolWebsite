@@ -77,7 +77,7 @@
 </template>
 
 <script>
-import { db } from "@/firebase";
+import { getPool } from "@/services/api";
 import pooltable from "@/mixins/pooltable";
 export default {
   props: [
@@ -125,15 +125,19 @@ export default {
     },
     poolindex: {
       immediate: true,
-      handler() {
+      async handler() {
         if (
           this.poolindex != null &&
           typeof this.$route.params.poolid !== "undefined"
         ) {
-          this.$rtdbBind(
-            "poolstats",
-            db.ref(this.network + "/pool_stats/" + this.$route.params.poolid)
-          );
+          try {
+            const { data } = await getPool(this.$route.params.poolid);
+            if (data && data.pool_stats) {
+              Object.assign(this.poolstats, data.pool_stats);
+            }
+          } catch (e) {
+            console.error("Failed to fetch pool stats", e);
+          }
         }
       },
     },

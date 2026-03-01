@@ -362,8 +362,7 @@
 </template>
 
 <script>
-//import VueJsonPretty from 'vue-json-pretty'
-import { db } from "@/firebase";
+import api from "@/services/api";
 
 export default {
   mixins: [],
@@ -627,13 +626,17 @@ export default {
         "Invalid URL"
       );
     },
-    updatePoolField(field, newvalue) {
+    async updatePoolField(field, newvalue) {
       var w = {};
       if (field == "public_note" && newvalue == "") {
         this.tempnote = "";
       }
       w[field] = newvalue;
-      db.ref(this.network + "/pool_stats/" + this.pool.poolpubkey).update(w); //
+      try {
+        await api.put(`/api/pool/${this.pool.poolpubkey}/stats`, w);
+      } catch (e) {
+        console.error("Failed to update pool field", e);
+      }
     },
   },
 

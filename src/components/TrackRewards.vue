@@ -129,6 +129,7 @@
 <script>
 const Buffer = require("buffer/").Buffer;
 let { bech32 } = require("bech32");
+import { queryAddress } from "@/services/api";
 export default {
   data: () => ({
     expand: false,
@@ -150,25 +151,22 @@ export default {
     },
   },
   methods: {
-    queryaddress: function (address) {
-      var self = this;
+    queryaddress: async function (address) {
       if (/[a-f0-9]{56}/gim.test(address)) {
-        this.axios({
-          method: "post",
-          url: "https://api.pooltool.io/v1/queryaddress",
-          data: {
-            stake_key: address,
-          },
-          headers: {},
-        }).then(function (response) {
+        try {
+          const response = await queryAddress(address);
           if (response.status == 200 && response.data.success) {
-            self.foundaddress = response.data;
+            this.foundaddress = response.data;
           } else {
-            self.foundaddress = null;
-            self.bechErrors =
+            this.foundaddress = null;
+            this.bechErrors =
               "Not a valid staking address.  We can only find keys that have been active in at least one epoch.  If this is a new key please wait until next epoch and try again.";
           }
-        });
+        } catch (e) {
+          this.foundaddress = null;
+          this.bechErrors =
+            "Not a valid staking address.  We can only find keys that have been active in at least one epoch.  If this is a new key please wait until next epoch and try again.";
+        }
       }
     },
     bech2cli: function () {

@@ -117,12 +117,17 @@
 </template>
 
 <script>
-import { db } from "@/firebase";
+import api from "@/services/api";
 export default {
   props: ["nightmode", "currentGenesis"],
-  mounted() {
+  async mounted() {
     this.$emit("isLoaded", true);
-    this.$rtdbBind("langs_raw", db.ref(this.network + "/languages"));
+    try {
+      const { data } = await api.get("/api/languages");
+      this.langs_raw = data || {};
+    } catch (e) {
+      console.error("Failed to fetch languages", e);
+    }
   },
 
   computed: {

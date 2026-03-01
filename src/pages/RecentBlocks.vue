@@ -130,7 +130,7 @@
 <script>
 //import numeral from "numeral";
 
-import { db } from "@/firebase";
+import { getBlocks } from "@/services/api";
 export default {
   components: {
     GenesisBar: () => import("../components/GenesisBar"),
@@ -166,9 +166,8 @@ export default {
       }
     },
     refetch_watch: {
-      // call it upon creation too
       immediate: true,
-      handler() {
+      async handler() {
         if (
           typeof this.search !== "undefined" &&
           this.search != "" &&
@@ -177,50 +176,35 @@ export default {
           this.$router.replace({ path: "/realtime/" + this.search });
         }
 
-        if (this.search == "") {
-          this.loading = true;
-          this.$rtdbBind(
-            "competitive",
-            db
-              .ref(this.network + "/competitive")
-              .orderByKey()
-              .limitToLast(21),
-            { reset: true }
-          ).then(() => {
-            this.loading = false;
-          });
-        } else {
-          //this.$rtdbUnbind("competitive");
-          this.loading = true;
-          if (
-            parseInt(this.search) >= 10000000 &&
-            parseInt(this.search) <= 10000005
-          ) {
-            this.$rtdbBind(
-              "competitive",
-              db
-                .ref(this.network + "/competitive")
-                .orderByKey()
-                .startAt((9999999).toString())
-                .endAt((parseInt(this.search) + 1).toString()),
-              { reset: true }
-            ).then(() => {
-              this.loading = false;
-            });
+        this.loading = true;
+        try {
+          const epoch = this.$store.getters.getGenesis.epoch;
+          const { data } = await getBlocks(epoch);
+          const raw = data || {};
+          if (this.search == "") {
+            const keys = Object.keys(raw).sort();
+            const last21 = keys.slice(-21);
+            var filtered = {};
+            last21.forEach((k) => { filtered[k] = raw[k]; });
+            this.competitive = filtered;
           } else {
-            this.$rtdbBind(
-              "competitive",
-              db
-                .ref(this.network + "/competitive")
-                .orderByKey()
-                .startAt((parseInt(this.search) - 5).toString())
-                .endAt((parseInt(this.search) + 1).toString()),
-              { reset: true }
-            ).then(() => {
-              this.loading = false;
-            });
+            const s = parseInt(this.search);
+            var rangeFiltered = {};
+            const startKey = s >= 10000000 && s <= 10000005 ? 9999999 : s - 5;
+            const endKey = s + 1;
+            for (const [key, value] of Object.entries(raw)) {
+              const k = parseInt(key);
+              if (k >= startKey && k <= endKey) {
+                rangeFiltered[key] = value;
+              }
+            }
+            this.competitive = rangeFiltered;
           }
+        } catch (e) {
+          console.error("Failed to fetch competitive blocks", e);
+          this.competitive = {};
         }
+        this.loading = false;
       },
     },
   },

@@ -170,7 +170,7 @@
 </template>
 
 <script>
-import { db } from "@/firebase";
+import { getPoolHistory } from "@/services/api";
 import { mapPreferences } from "vue-preferences";
 import { mdiStarFace } from "@mdi/js";
 import numeral from "numeral";
@@ -474,40 +474,21 @@ export default {
   },
   watch: {
     pool: {
-      // call it upon creation too
       immediate: true,
-      handler(pool) {
-        this.$rtdbBind(
-          "block_history",
-          db.ref(this.network + "/pool_stats/" + pool.poolpubkey + "/blocks")
-        );
-        this.$rtdbBind(
-          "slots_history",
-          db.ref(
-            this.network + "/pool_stats/" + pool.poolpubkey + "/assigned_slots"
-          )
-        );
-        this.$rtdbBind(
-          "delegator_reward_history",
-          db.ref(
-            this.network +
-              "/pool_stats/" +
-              pool.poolpubkey +
-              "/delegators_rewards"
-          )
-        );
-        this.$rtdbBind(
-          "pool_fee_history",
-          db.ref(this.network + "/pool_stats/" + pool.poolpubkey + "/pool_fees")
-        );
-        this.$rtdbBind(
-          "ros_history",
-          db.ref(this.network + "/pool_stats/" + pool.poolpubkey + "/ros")
-        );
-        this.$rtdbBind(
-          "stake_history",
-          db.ref(this.network + "/pool_stats/" + pool.poolpubkey + "/stake")
-        );
+      async handler(pool) {
+        try {
+          const { data } = await getPoolHistory(pool.poolpubkey);
+          if (data) {
+            this.block_history = data.blocks || {};
+            this.slots_history = data.assigned_slots || {};
+            this.delegator_reward_history = data.delegators_rewards || {};
+            this.pool_fee_history = data.pool_fees || {};
+            this.ros_history = data.ros || {};
+            this.stake_history = data.stake || {};
+          }
+        } catch (e) {
+          console.error("Failed to fetch pool history", e);
+        }
       },
     },
   },

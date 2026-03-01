@@ -55,7 +55,7 @@
   </div>
 </template>
 <script>
-import { db } from "@/firebase";
+import { updateUserSettings } from "@/services/api";
 import currenciesjson from "@/json/currencies.json";
 import LocalSelectorV from "@/components/LocalSelectorV.vue";
 
@@ -103,19 +103,19 @@ export default {
     loadLocaleMessages(data) {
       this.$emit("loadLocaleMessages", data);
     },
-    updatePubMeta(item, val) {
-      var w = {};
-      w[item] = val;
-      db.ref(this.network + "/users/pubMeta")
-        .child(this.userId)
-        .update(w);
+    async updatePubMeta(item, val) {
+      try {
+        await updateUserSettings(this.userId, { pubMeta: { [item]: val } });
+      } catch (e) {
+        console.error("Failed to update public meta", e);
+      }
     },
-    updatePrivMeta(item, val) {
-      var w = {};
-      w[item] = val;
-      db.ref(this.network + "/users/privMeta")
-        .child(this.userId)
-        .update(w);
+    async updatePrivMeta(item, val) {
+      try {
+        await updateUserSettings(this.userId, { privMeta: { [item]: val } });
+      } catch (e) {
+        console.error("Failed to update private meta", e);
+      }
     },
   },
 };

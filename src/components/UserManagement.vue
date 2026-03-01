@@ -132,7 +132,7 @@
 
 <script>
 const Buffer = require("buffer/").Buffer;
-import { db } from "@/firebase";
+import { getUser, updateUserSettings } from "@/services/api";
 let { bech32 } = require("bech32");
 export default {
   // firebase: {
@@ -168,159 +168,108 @@ export default {
     },
   },
   watch: {
-    foundUserId: function (newval) {
+    foundUserId: async function (newval) {
       if (newval != null) {
-        this.$rtdbBind(
-          "foundPrivMeta",
-          db.ref(this.network + "/users/privMeta/" + newval)
-        );
-        this.$rtdbBind(
-          "verificationStatuses",
-          db.ref(
-            this.network +
-              "/users/verification_statuses/3d37c4e7-3031-475c-95fb-699dd29c030e/" +
-              newval
-          )
-        );
-        this.$rtdbBind(
-          "auth",
-          db.ref(this.network + "/users/auth").child(newval)
-        );
-        // db.ref(this.network + "/users/privMeta/" + newval).once('value', snapshot => {
-        //     var snap = snapshot.val()
-        //     if (snap != null) {
-        //         this.foundPrivMeta = snap
-        //         this.foundPrivMetaErrors = ''
-        //     } else {
-        //         this.foundPrivMeta = null
-        //         this.foundPrivMetaErrors = "No privMeta for this user account yet"
-        //     }
-
-        // })
+        try {
+          const { data } = await getUser(newval);
+          if (data) {
+            this.foundPrivMeta = data.privMeta || {};
+            this.verificationStatuses = data.verificationStatuses || {};
+            this.auth = data.auth || {};
+            this.foundPrivMetaErrors = "";
+          }
+        } catch (e) {
+          console.error("Failed to fetch user data", e);
+          this.foundPrivMeta = null;
+          this.foundPrivMetaErrors = "Failed to fetch user data";
+        }
       }
     },
   },
   methods: {
-    installHash: function (userid, passwordHash) {
-      db.ref(this.network + "/users/auth")
-        .child(userid)
-        .update({ passwordHash: passwordHash, createdAt: Date.now() });
+    installHash: async function (userid, passwordHash) {
+      try {
+        await updateUserSettings(userid, { auth: { passwordHash: passwordHash, createdAt: Date.now() } });
+      } catch (e) {
+        console.error("Failed to install hash", e);
+      }
     },
 
-    manuallyVerify: function (userid, address) {
+    manuallyVerify: async function (userid, address) {
       console.log(userid, address);
-      // given a user id and an account, to manually verify we need to:
-      // 1.  add an addr2user mapping in addr2user table
-      var w = {};
-      w[address] = userid;
-      db.ref(this.network + "/users/addr2user").update(w);
-      // 2.  push address to verified_addresses/3d37c4e7-3031-475c-95fb-699dd29c030e/[]
-      db.ref(
-        this.network +
-          "/users/verified_addresses/3d37c4e7-3031-475c-95fb-699dd29c030e"
-      ).push(address);
-      // 3.  update the following in verification_statuses/3d37c4e7-3031-475c-95fb-699dd29c030e/<user id>/<address>/
-      //              status: verified
-      //              verificationDate: now in ms
-      db.ref(
-        this.network +
-          "/users/verification_statuses/3d37c4e7-3031-475c-95fb-699dd29c030e"
-      )
-        .child(userid)
-        .child(address)
-        .update({
-          status: "verified",
-          verificationDate: Date.now(),
+      try {
+        await updateUserSettings(userid, {
+          manualVerify: {
+            address: address,
+            status: "verified",
+            verificationDate: Date.now(),
+          },
         });
-      // 4.  push address to auth/<user id>/verifiedAddresses/[]
-
-      db.ref(this.network + "/users/auth")
-        .child(userid)
-        .child("verifiedAddresses")
-        .push(address);
-      // 5.  add created_at and passwordHash to the auth entry if it does not already exist!!!!!
-      //TODO
+      } catch (e) {
+        console.error("Failed to manually verify", e);
+      }
     },
     //subExpAdj(subtype,1)
-    subExpAdj: function (subtype, subval) {
+    subExpAdj: async function (subtype, subval) {
       if (subtype != null && this.foundUserId != null) {
-        var setval = {};
-        setval[subtype] = subval;
-        db.ref(
-          this.network +
-            "/users/privMeta/" +
-            this.foundUserId +
-            "/mySubscriptions"
-        ).update(setval);
+        try {
+          await updateUserSettings(this.foundUserId, {
+            privMeta: { mySubscriptions: { [subtype]: subval } },
+          });
+        } catch (e) {
+          console.error("Failed to adjust subscription", e);
+        }
       }
     },
-    addSubscription: function () {
+    addSubscription: async function () {
       if (this.addSubscriptionValue != null && this.foundUserId != null) {
-        var setval = {};
-        setval[this.addSubscriptionValue] = 1; //adds subscription as disabled
-
-        db.ref(
-          this.network +
-            "/users/privMeta/" +
-            this.foundUserId +
-            "/mySubscriptions"
-        ).update(setval);
+        try {
+          await updateUserSettings(this.foundUserId, {
+            privMeta: { mySubscriptions: { [this.addSubscriptionValue]: 1 } },
+          });
+        } catch (e) {
+          console.error("Failed to add subscription", e);
+        }
       }
     },
-    addTranslation: function () {
+    addTranslation: async function () {
       if (this.addTranslationValue != null && this.foundUserId != null) {
-        var setval = {};
-        setval[this.addTranslationValue] = true;
-
-        db.ref(
-          this.network +
-            "/users/privMeta/" +
-            this.foundUserId +
-            "/ownedTranslations"
-        ).update(setval);
+        try {
+          await updateUserSettings(this.foundUserId, {
+            privMeta: { ownedTranslations: { [this.addTranslationValue]: true } },
+          });
+        } catch (e) {
+          console.error("Failed to add translation", e);
+        }
       }
     },
-    queryaddress: function (address) {
+    queryaddress: async function (address) {
       if (address != null) {
         this.foundUserIds = [];
-        db.ref(this.network + "/users/addr2user/" + address).once(
-          "value",
-          (snapshot) => {
-            var snap = snapshot.val();
-            if (snap != null) {
-              this.foundUserId = snap;
-              this.bechErrors = "";
-              this.unverifiedAccount = false;
-            } else {
-              //try looking the user up through the new verification statuses as this means the account has not been verified yet
-              db.ref(
-                this.network +
-                  "/users/verification_statuses/3d37c4e7-3031-475c-95fb-699dd29c030e"
-              ).once("value", (snapshot) => {
-                console.log(snapshot.val());
-                var thisshap = snapshot.val();
-                for (const uid in thisshap) {
-                  for (const add in thisshap[uid]) {
-                    console.log;
-                    if (add == address) {
-                      this.unverifiedAccount = true;
-                      this.foundUserId = uid;
-                      this.bechErrors = "";
-                      this.foundUserIds.push(uid);
-                    }
-                  }
-                }
-                if (this.foundUserIds.length == 0) {
-                  this.foundUserId = null;
-                  this.unverifiedAccount = false;
-                  this.foundPrivMeta = null;
-                  this.foundPrivMetaErrors = "";
-                  this.bechErrors = "No account found with that address";
-                }
-              });
+        try {
+          const { queryAddress } = await import("@/services/api");
+          const response = await queryAddress(address);
+          if (response.data && response.data.userId) {
+            this.foundUserId = response.data.userId;
+            this.bechErrors = "";
+            this.unverifiedAccount = response.data.unverified || false;
+            if (this.unverifiedAccount) {
+              this.foundUserIds.push(response.data.userId);
             }
+          } else {
+            this.foundUserId = null;
+            this.unverifiedAccount = false;
+            this.foundPrivMeta = null;
+            this.foundPrivMetaErrors = "";
+            this.bechErrors = "No account found with that address";
           }
-        );
+        } catch (e) {
+          this.foundUserId = null;
+          this.unverifiedAccount = false;
+          this.foundPrivMeta = null;
+          this.foundPrivMetaErrors = "";
+          this.bechErrors = "No account found with that address";
+        }
       }
     },
     bech2cli: function () {

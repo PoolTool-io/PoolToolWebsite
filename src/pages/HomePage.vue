@@ -154,7 +154,7 @@
 </template>
 <script>
 import numeral from "numeral";
-import { db } from "@/firebase";
+import { pivotRewards, getStakeHist } from "@/services/api";
 import pooltable from "@/mixins/pooltable";
 import poolfavorites from "@/mixins/poolfavorites";
 import GenesisBar from "@/components/GenesisBar";
@@ -229,62 +229,45 @@ export default {
     this.$emit("isLoaded", true);
   },
   methods: {
-    loadFavoriteAddressData: function () {
+    loadFavoriteAddressData: async function () {
       if (this.viewepoch != null) {
         this.livedatafaves = {};
-        this.axios({
-          method: "post",
-          url: "https://api.pooltool.io/v1/pivotrewards",
-          data: {
-            stake_key: this.favoriteaddrs,
-          },
-          headers: {},
-        });
+        try {
+          await pivotRewards(this.favoriteaddrs);
+        } catch (e) {
+          console.error("Failed to trigger pivotRewards for favorites", e);
+        }
 
-        this.favoriteaddrs.forEach(function (address) {
+        for (const address of this.favoriteaddrs) {
           if (/[a-f0-9]{56}/gim.test(address)) {
             this.$set(this.livedatafaves, String(address), {
               nickname: "",
               stake_address: address,
               epoch: this.viewepoch,
             });
-            const livereffav = "livedatafaves." + String(address);
-            this.$rtdbBind(
-              livereffav,
-              db
-                .ref(this.network + "/stake_hist")
-                .child(address)
-                .child(this.viewepoch),
-              {
-                serialize: (snapshot) => {
-                  var aitem = snapshot.val();
-                  if (aitem == null) {
-                    aitem = {};
-                  }
-                  aitem["stake_address"] = address;
-                  aitem["epoch"] = this.viewepoch;
-
-                  return aitem;
-                },
-              }
-            );
+            try {
+              const { data } = await getStakeHist(address);
+              var aitem = (data && data[this.viewepoch]) ? data[this.viewepoch] : {};
+              aitem["stake_address"] = address;
+              aitem["epoch"] = this.viewepoch;
+              this.$set(this.livedatafaves, String(address), aitem);
+            } catch (e) {
+              console.error("Failed to fetch stake hist for", address, e);
+            }
           }
-        }, this);
+        }
       }
     },
 
-    loadAllAddressData: function () {
+    loadAllAddressData: async function () {
       if (this.viewepoch != null) {
         this.livedatamy = {};
         if (Object.keys(this.myAddresses).length) {
-          this.axios({
-            method: "post",
-            url: "https://api.pooltool.io/v1/pivotrewards",
-            data: {
-              stake_key: Object.keys(this.myAddresses),
-            },
-            headers: {},
-          });
+          try {
+            await pivotRewards(Object.keys(this.myAddresses));
+          } catch (e) {
+            console.error("Failed to trigger pivotRewards for addresses", e);
+          }
         }
 
         for (const address in this.myAddresses) {
@@ -293,35 +276,21 @@ export default {
             stake_address: address,
             epoch: this.viewepoch,
           });
-          const liverefmy = "livedatamy." + String(address);
-          this.$rtdbBind(
-            liverefmy,
-            db
-              .ref(this.network + "/stake_hist")
-              .child(address)
-              .child(this.viewepoch),
-            {
-              serialize: (snapshot) => {
-                var aitem = snapshot.val();
-                if (aitem == null) {
-                  aitem = {};
-                }
-
-                aitem["nickname"] = this.myAddresses[address].nickname;
-                aitem["stake_address"] = address;
-                aitem["epoch"] = this.viewepoch;
-                return aitem;
-              },
-            }
-          );
+          try {
+            const { data } = await getStakeHist(address);
+            var aitem = (data && data[this.viewepoch]) ? data[this.viewepoch] : {};
+            aitem["nickname"] = this.myAddresses[address].nickname;
+            aitem["stake_address"] = address;
+            aitem["epoch"] = this.viewepoch;
+            this.$set(this.livedatamy, String(address), aitem);
+          } catch (e) {
+            console.error("Failed to fetch stake hist for", address, e);
+          }
         }
       }
     },
     bindHistogramDatakeys: function () {
-      this.$rtdbBind(
-        "rewardsHistogramkeys",
-        db.ref(this.network + "/staticCharts").child("rewardsHistogram")
-      );
+      this.rewardsHistogramkeys = {};
     },
     toggleAddressFavorite: function (addressid) {
       var indx = this.favoriteaddrs.indexOf(addressid);
@@ -335,10 +304,7 @@ export default {
     },
 
     bindHistogramData: function () {
-      this.$rtdbBind(
-        "rewardsHistogram",
-        db.ref(this.network + "/staticCharts").child("poolRewardsHistogram")
-      );
+      this.rewardsHistogram = {};
     },
     setCurrency(currency) {
       this.$emit("setCurrency", currency);

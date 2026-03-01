@@ -259,7 +259,7 @@
   </div>
 </template>
 <script>
-import { db } from "@/firebase";
+import { updateUserSettings } from "@/services/api";
 export default {
   name: "address-card",
   props: [
@@ -290,14 +290,14 @@ export default {
 
   unmounted: function () {},
   methods: {
-    savedata(stake_address, val) {
-      db.ref(this.network + "/users/privMeta")
-        .child(this.userId)
-        .child("myAddresses")
-        .child(stake_address)
-        .update({
-          nickname: val,
+    async savedata(stake_address, val) {
+      try {
+        await updateUserSettings(this.userId, {
+          privMeta: { myAddresses: { [stake_address]: { nickname: val } } },
         });
+      } catch (e) {
+        console.error("Failed to save address nickname", e);
+      }
     },
   },
   computed: {

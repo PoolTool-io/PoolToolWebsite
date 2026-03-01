@@ -174,7 +174,7 @@
 
 <script>
 import VueNumericInput from "vue-numeric-input";
-import { db } from "@/firebase";
+import { getPoolBlocks, getBlocks } from "@/services/api";
 import { mapPreferences } from "vue-preferences";
 export default {
   props: ["nightmode", "pool", "userId", "genesis"],
@@ -196,35 +196,30 @@ export default {
     };
   },
   methods: {
-    explore: function (item) {
-      db.ref(this.network + "/blocks/" + this.target_epoch)
-        .orderByKey()
-        .startAt((item.block - 5).toString())
-        .limitToFirst(10)
-        .once("value", (snapshot) => {
+    explore: async function (item) {
+      try {
+        const { data } = await getBlocks(this.target_epoch);
+        if (data) {
           var a = [];
-          for (const value of Object.values(snapshot.val())) {
-            value["chained"] = true;
-            a.push(value);
-          }
-          this.exploreblocks = a;
-        });
-
-      db.ref(this.network + "/deleted_blocks/" + this.target_epoch)
-        .orderByKey()
-        .startAt((item.block - 5).toString())
-        .endAt((item.block + 5).toString())
-        .once("value", (snapshot) => {
-          var a = [];
-          const orph = snapshot.val();
-          if (orph != null) {
-            for (const value of Object.values(orph)) {
-              value["chained"] = false;
+          var orphans = [];
+          for (const [key, value] of Object.entries(data.blocks || {})) {
+            if (parseInt(key) >= item.block - 5 && parseInt(key) < item.block + 5) {
+              value["chained"] = true;
               a.push(value);
             }
           }
-          this.exploreorphans = a;
-        });
+          this.exploreblocks = a.slice(0, 10);
+          for (const [key, value] of Object.entries(data.deleted_blocks || {})) {
+            if (parseInt(key) >= item.block - 5 && parseInt(key) <= item.block + 5) {
+              value["chained"] = false;
+              orphans.push(value);
+            }
+          }
+          this.exploreorphans = orphans;
+        }
+      } catch (e) {
+        console.error("Failed to explore blocks", e);
+      }
       this.$nextTick(() => {
         this.$vuetify.goTo("#exploreblock", {
           duration: 0,
@@ -248,20 +243,17 @@ export default {
   watch: {
     refetch_watch: {
       immediate: true,
-      handler() {
+      async handler() {
         this.exploreorphans = [];
         this.exploreblocks = [];
         if (typeof this.pool !== "undefined") {
-          this.$rtdbBind(
-            "blocks_raw",
-            db.ref(
-              this.network +
-                "/pool_blocks/" +
-                this.pool.poolpubkey +
-                "/" +
-                this.target_epoch
-            )
-          ); //.startAt(this.blocksPage * this.blocksItemsPerPage).orderByChild(this.blocksSortBy[0]).limitToLast(this.blocksItemsPerPage)
+          try {
+            const { data } = await getPoolBlocks(this.pool.poolpubkey, this.target_epoch);
+            this.blocks_raw = data || {};
+          } catch (e) {
+            console.error("Failed to fetch pool blocks", e);
+            this.blocks_raw = {};
+          }
         }
       },
     },
