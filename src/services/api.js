@@ -11,12 +11,17 @@ function resolveApiBase() {
   }
   return "http://localhost:3004";
 }
-const API_BASE = resolveApiBase();
 
 const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: "",
   timeout: 15000,
   headers: { "Content-Type": "application/json" },
+});
+
+// Resolve API base at request time so the app works from any host (no baked localhost).
+api.interceptors.request.use((config) => {
+  config.baseURL = resolveApiBase();
+  return config;
 });
 
 // ── Auth ──────────────────────────────────────────────

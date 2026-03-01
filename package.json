@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
+    "serve:dev": "vue-cli-service serve --port 8080",
     "build": "vue-cli-service build --max_old_space_size=8192",
     "lint": "vue-cli-service lint",
     "deploy_www": "aws --region us-west-2 --profile s3_www.pooltool.io_write s3 sync ./dist s3://www.pooltool.io",

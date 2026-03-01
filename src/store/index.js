@@ -347,6 +347,14 @@ export const store = new Vuex.Store({
       // Subscribe to real-time recent_block updates
       wsClient.subscribe("recent_block", {}, (data) => {
         commit("setMostRecentBlock", data);
+        // Keep sync_data in sync so getGenesis.senddata.currentepoch/slot/height update
+        if (data && (data.epoch != null || data.block != null || data.slot != null)) {
+          commit("setSyncDataFromBlock", {
+            currentepoch: data.epoch,
+            currentslot: data.slot,
+            histogramheight: data.block,
+          });
+        }
       });
 
       // Subscribe to real-time ecosystem updates
@@ -407,6 +415,12 @@ export const store = new Vuex.Store({
     },
     setSyncData(state, data) {
       state.sync_data = data;
+    },
+    setSyncDataFromBlock(state, data) {
+      if (!state.sync_data) state.sync_data = {};
+      if (data.currentepoch != null) state.sync_data.currentepoch = data.currentepoch;
+      if (data.currentslot != null) state.sync_data.currentslot = data.currentslot;
+      if (data.histogramheight != null) state.sync_data.histogramheight = data.histogramheight;
     },
     setEpochData(state, data) {
       state.epoch_data = data;
@@ -519,7 +533,15 @@ export const store = new Vuex.Store({
             ? state.ecosystem.activeSlotCoeff || 0.05
             : 0.05,
         slot_in_epoch:
-          state.most_recent_block != null ? state.most_recent_block.slot : 0,
+          state.most_recent_block != null
+            ? (() => {
+                const b = state.most_recent_block;
+                const epochLen = state.ecosystem != null ? (state.ecosystem.epochLength || 432000) : 432000;
+                let es = b.epoch_slot != null ? b.epoch_slot : b.slot;
+                if (es >= epochLen && b.slot != null) es = b.slot % epochLen;
+                return es;
+              })()
+            : 0,
         prices: state.ecosystem != null ? state.ecosystem.prices || {} : {},
         forecast_rewards_complete_epoch:
           state.most_recent_block ? state.most_recent_block.epoch : 0,

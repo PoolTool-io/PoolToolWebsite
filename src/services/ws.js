@@ -16,7 +16,6 @@ function resolveWsUrl() {
   }
   return "ws://localhost:3004/ws";
 }
-const WS_URL = resolveWsUrl();
 
 class PoolToolWS {
   constructor() {
@@ -31,45 +30,60 @@ class PoolToolWS {
   connect() {
     if (this._ws && this._ws.readyState <= 1) return;
 
-    this._ws = new WebSocket(WS_URL);
+    const wsUrl = resolveWsUrl();
+    if (typeof console !== "undefined") {
+      console.log("[PoolTool WS] Connecting to", wsUrl);
+    }
+    this._ws = new WebSocket(wsUrl);
 
     this._ws.onopen = () => {
       this._connected = true;
+      if (typeof console !== "undefined") console.log("[PoolTool WS] Connected");
       this._queue.forEach((msg) => this._ws.send(msg));
       this._queue = [];
     };
 
     this._ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.type === "ping") {
-          this._ws.send(JSON.stringify({ action: "pong" }));
-          return;
-        }
-        const channel = msg.channel;
-        if (channel && this._listeners[channel]) {
-          let data = msg.data;
-          if (typeof data === "string") {
-            try {
-              data = JSON.parse(data);
-            } catch (_) {
-              // keep as string
-            }
+      const raw = event.data;
+      const parse = (text) => {
+        try {
+          const msg = JSON.parse(text);
+          if (msg.type === "ping") {
+            this._ws.send(JSON.stringify({ action: "pong" }));
+            return;
           }
-          this._listeners[channel](data);
+          const channel = msg.channel;
+          if (channel && this._listeners[channel]) {
+            let data = msg.data;
+            if (typeof data === "string") {
+              try {
+                data = JSON.parse(data);
+              } catch (_) {
+                // keep as string
+              }
+            }
+            this._listeners[channel](data);
+          }
+        } catch (_) {
+          if (typeof console !== "undefined") console.warn("[PoolTool WS] Parse error", _);
         }
-      } catch (_) {
-        // ignore parse errors
+      };
+      if (typeof raw === "string") {
+        parse(raw);
+      } else if (raw && typeof raw.text === "function") {
+        raw.text().then(parse);
       }
     };
 
     this._ws.onclose = () => {
       this._connected = false;
+      if (typeof console !== "undefined") console.log("[PoolTool WS] Closed, reconnecting in 3s");
       this._scheduleReconnect();
     };
 
     this._ws.onerror = () => {
       this._connected = false;
+      if (typeof console !== "undefined") console.warn("[PoolTool WS] Error");
     };
   }
 
