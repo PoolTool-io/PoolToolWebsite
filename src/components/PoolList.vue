@@ -25,7 +25,7 @@
       <span
         class="text-no-wrap"
         v-if="item.pool_name == '' || item.pool_name == null"
-        >{{ item.poolpubkey | ellipsiscrypto }}</span
+        >{{ item.pool_id | ellipsiscrypto }}</span
       >
       <span
         class="font-weight-bold text-no-wrap"
@@ -37,12 +37,12 @@
     <template #[`item.height`]="{ item }">
       <v-chip
         v-if="
-          item.poolpubkey in heights &&
-          heights[item.poolpubkey] != null &&
-          heights[item.poolpubkey] > 0
+          item.pool_id in heights &&
+          heights[item.pool_id] != null &&
+          heights[item.pool_id] > 0
         "
         :class="
-          item.poolpubkey in heights && heights[item.poolpubkey] == 1
+          item.pool_id in heights && heights[item.pool_id] == 1
             ? 'genesisbar'
             : 'genesisbarred'
         "
@@ -50,10 +50,10 @@
         dark
       >
         {{
-          item.poolpubkey in heights && heights[item.poolpubkey] == 1
+          item.pool_id in heights && heights[item.pool_id] == 1
             ? genesis.senddata.majoritymax
-            : item.poolpubkey in heights && heights[item.poolpubkey]
-            ? heights[item.poolpubkey]
+            : item.pool_id in heights && heights[item.pool_id]
+            ? heights[item.pool_id]
             : ""
         }}
       </v-chip>
@@ -68,8 +68,8 @@
         ></v-progress-circular>
       </span>
       <span v-else>{{
-        item.poolpubkey in rewards
-          ? rewards[item.poolpubkey]["epochRos"]
+        item.pool_id in rewards
+          ? rewards[item.pool_id]["epochRos"]
           : 0 | fpercent
       }}</span>
     </template>
@@ -83,8 +83,8 @@
         ></v-progress-circular>
       </span>
       <span v-else>{{
-        item.poolpubkey in rewardsnp1
-          ? rewardsnp1[item.poolpubkey]["epochRos"]
+        item.pool_id in rewardsnp1
+          ? rewardsnp1[item.pool_id]["epochRos"]
           : 0 | fpercent
       }}</span>
     </template>
@@ -112,8 +112,8 @@
         ></v-progress-circular>
       </span>
       <span v-else>{{
-        item.poolpubkey in rewards
-          ? rewards[item.poolpubkey]["epochRewards"]
+        item.pool_id in rewards
+          ? rewards[item.pool_id]["epochRewards"]
           : 0 | toada | numFormat("0,0.0a")
       }}</span>
     </template>
@@ -140,8 +140,8 @@
         ></v-progress-circular>
       </span>
       <span v-else>{{
-        item.poolpubkey in rewards
-          ? rewards[item.poolpubkey]["epochTax"]
+        item.pool_id in rewards
+          ? rewards[item.pool_id]["epochTax"]
           : 0 | toada | numFormat("0,0.0a")
       }}</span>
     </template>
@@ -161,8 +161,8 @@
 
     <template #[`item.rewardstake`]="{ item }">
       {{
-        item.poolpubkey in rewardstake
-          ? rewardstake[item.poolpubkey]
+        item.pool_id in rewardstake
+          ? rewardstake[item.pool_id]
           : 0 | toada | numFormat("0,0.0a")
       }}
     </template>
@@ -195,25 +195,25 @@
         </v-tooltip>
       </span>
     </template>
-    <template #[`item.groupname`]="{ item }">
+    <template #[`item.group_name`]="{ item }">
       <v-text-field
         class=""
         dense
         hide-details
         flat
-        :value="item.groupname"
-        @change="updatePoolField('groupname', item, $event)"
+        :value="item.group_name"
+        @change="updatePoolField('group_name', item, $event)"
       ></v-text-field>
     </template>
-    <template #[`item.poolcost`]="{ item }">
-      <span v-if="item.poolcost != item.fpoolcost && !item.genesis_pool">
+    <template #[`item.cost`]="{ item }">
+      <span v-if="item.cost != item.future_cost && !item.genesis">
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
             <v-icon
               class="ma-0 pa-0"
               v-on="on"
               v-bind="attrs"
-              v-if="item.poolcost < item.fpoolcost"
+              v-if="item.cost < item.future_cost"
               color="red"
               >mdi-arrow-up-bold</v-icon
             >
@@ -228,28 +228,28 @@
           </template>
           <span
             >{{ $t("app.pools.epochFeeChangingTo") }}
-            {{ item.fpoolcost | toada }}</span
+            {{ item.future_cost | toada }}</span
           >
         </v-tooltip>
       </span>
-      {{ item.poolcost | toada }}
+      {{ item.cost | toada }}
     </template>
     <template #[`item.grouppoolpledge`]="{ item }">
-      {{ item.poolpledge | toada | numFormat("0,0.0a") }}
+      {{ item.pledge | toada | numFormat("0,0.0a") }}
     </template>
     <template #[`item.grouppoolpledgevalue`]="{ item }">
-      {{ item.poolpledgevalue | toada | numFormat("0,0.0a") }}
+      {{ item.pool_pledge_value | toada | numFormat("0,0.0a") }}
     </template>
-    <template #[`item.poolpledge`]="{ item }">
+    <template #[`item.pledge`]="{ item }">
       <span class="text-no-wrap">
-        <span v-if="item.poolpledge != item.fpoolpledge && !item.genesis_pool">
+        <span v-if="item.pledge != item.future_pledge && !item.genesis">
           <v-tooltip bottom>
             <template v-slot:activator="{ on, attrs }">
               <v-icon
                 class="ma-0 pa-0"
                 v-on="on"
                 v-bind="attrs"
-                v-if="item.fpoolpledge > item.poolpledge"
+                v-if="item.future_pledge > item.pledge"
                 color="success"
                 >mdi-arrow-up-bold</v-icon
               >
@@ -264,12 +264,12 @@
             </template>
             <span
               >{{ $t("app.pools.pledgeChangingTo") }}
-              {{ item.fpoolpledge | toada | numFormat("0,0.000a") }}</span
+              {{ (item.future_pledge != null ? item.future_pledge : 0) | toada | numFormat("0,0.000a") }}</span
             >
           </v-tooltip>
         </span>
-        {{ item.poolpledge | toada | numFormat("0,0.0a") }}
-        <v-tooltip v-if="item.poolpledgevalue >= item.poolpledge" bottom>
+        {{ item.pledge | toada | numFormat("0,0.0a") }}
+        <v-tooltip v-if="item.pool_pledge_value >= item.pledge" bottom>
           <template v-slot:activator="{ on, attrs }">
             <v-icon
               small
@@ -281,7 +281,7 @@
           </template>
           <span
             >{{ $t("global.declaredPoolPledgeMet") }} ({{
-              item.poolpledgevalue | toada | numFormat("0,0.0a")
+              item.pool_pledge_value | toada | numFormat("0,0.0a")
             }})</span
           >
         </v-tooltip>
@@ -299,22 +299,22 @@
         </v-tooltip>
       </span>
     </template>
-    <template #[`item.poolpledgevalue`]="{ item }">
+    <template #[`item.pool_pledge_value`]="{ item }">
       <span class="text-no-wrap">
-        {{ item.poolpledgevalue | toada | numFormat("0,0.0a") }}
+        {{ item.pool_pledge_value | toada | numFormat("0,0.0a") }}
       </span>
     </template>
-    
-    <template #[`item.poolmargin`]="{ item }">
+
+    <template #[`item.margin`]="{ item }">
       <span class="text-no-wrap">
-        <span v-if="item.poolmargin != item.fpoolmargin && !item.genesis_pool">
+        <span v-if="item.margin != item.future_margin && !item.genesis">
           <v-tooltip bottom>
             <template v-slot:activator="{ on, attrs }">
               <v-icon
                 class="ma-0 pa-0"
                 v-on="on"
                 v-bind="attrs"
-                v-if="item.poolmargin < item.fpoolmargin"
+                v-if="item.margin < item.future_margin"
                 color="red"
                 >mdi-arrow-up-bold</v-icon
               >
@@ -329,27 +329,27 @@
             </template>
             <span
               >{{ $t("app.pools.variableFeeChangingTo") }}
-              {{ (item.fpoolmargin * 100) | numFormat("0,0.000") }}%</span
+              {{ item.future_margin | numFormat("0,0.000") }}%</span
             >
           </v-tooltip>
         </span>
-        {{ (item.poolmargin * 100) | numFormat("0,0.000") }}%
+        {{ item.margin | numFormat("0,0.000") }}%
       </span>
     </template>
 
     <template #[`item.grouppoolpubkey`]="{ item }">
       <span class="text-no-wrap">
-        {{ item.poolpubkey | ellipsis(16) }}
-        <v-btn text x-small icon v-clipboard="item.poolpubkey">
+        {{ item.pool_id | ellipsis(16) }}
+        <v-btn text x-small icon v-clipboard="item.pool_id">
           <v-icon x-small>mdi-content-copy</v-icon>
         </v-btn>
       </span>
     </template>
 
-    <template #[`item.poolpubkey`]="{ item }">
+    <template #[`item.pool_id`]="{ item }">
       <span class="text-no-wrap">
-        {{ item.poolpubkey | ellipsiscrypto(16) }}
-        <v-btn text x-small icon v-clipboard="item.poolpubkey">
+        {{ item.pool_id | ellipsiscrypto(16) }}
+        <v-btn text x-small icon v-clipboard="item.pool_id">
           <v-icon x-small>mdi-content-copy</v-icon>
         </v-btn>
       </span>
@@ -357,7 +357,7 @@
 
     <template #[`item.actions`]="{ item }">
       <span class="text-no-wrap">
-        <v-tooltip v-if="mypools.includes(item.poolpubkey)" bottom>
+        <v-tooltip v-if="mypools.includes(item.pool_id)" bottom>
           <template v-slot:activator="{ on, attrs }">
             <v-btn
               v-bind="attrs"
@@ -366,7 +366,7 @@
               small
               :to="{
                 name: 'poolmanagement',
-                params: { poolid: item.poolpubkey },
+                params: { poolid: item.pool_id },
               }"
               color="primary"
             >
@@ -383,7 +383,7 @@
               v-on="on"
               icon
               small
-              :to="{ name: 'poolepochs', params: { poolid: item.poolpubkey } }"
+              :to="{ name: 'poolepochs', params: { poolid: item.pool_id } }"
               color="primary"
             >
               <v-icon dense medium>mdi-arrow-right-bold-circle</v-icon>
@@ -396,7 +396,7 @@
 
     <template #[`item.blockstake`]="{ item }">
       {{
-        activestake[item.poolpubkey] | toada | numFormat("0,0.00a") | zeronull
+        activestake[item.pool_id] | toada | numFormat("0,0.00a") | zeronull
       }}
     </template>
     <template #[`item.groupblockstake`]="{ item }">
@@ -405,7 +405,7 @@
     <template #[`item.activestakepercent`]="{ item }">
       <span class="text-no-wrap">
         {{
-          activestake[item.poolpubkey]
+          activestake[item.pool_id]
             | renderstakepercent(genesis.blockstake)
             | numFormat("0.000%")
         }}
@@ -419,7 +419,7 @@
               v-on="on"
               v-clipboard="
                 $options.filters.renderstakepercent(
-                  activestake[item.poolpubkey],
+                  activestake[item.pool_id],
                   genesis.blockstake
                 )
               "
@@ -429,7 +429,7 @@
           </template>
           <span
             >{{
-              activestake[item.poolpubkey]
+              activestake[item.pool_id]
                 | renderstakepercent(genesis.blockstake)
             }}
             {{ $t("app.pools.clickToCopy") }}</span
@@ -474,10 +474,10 @@
 
     <template #[`item.epoch_blocks_percent`]="{ item }">
       <div
-        v-if="!item.genesis_pool && genesis.livedata2.total_epoch_blocks > 0"
+        v-if="!item.genesis && genesis.livedata2.total_epoch_blocks > 0"
       >
         {{
-          ((item.epochBlocksEpoch == genesis.epoch ? item.epoch_blocks : 0) /
+          ((item.epoch_blocks_epoch == genesis.epoch ? item.epoch_blocks : 0) /
             genesis.livedata2.total_epoch_blocks)
             | numFormat("0.000%")
         }}
@@ -494,13 +494,13 @@
         ></v-progress-circular>
       </span>
       <span v-else>{{
-        item.poolpubkey in rewards
-          ? rewards[item.poolpubkey]["lifetimeRos"]
+        item.pool_id in rewards
+          ? rewards[item.pool_id]["lifetimeRos"]
           : 0 | fpercent
       }}</span>
     </template>
 
-    <template #[`item.sixros`]="{ item }">
+    <template #[`item.one_month_ros`]="{ item }">
       <span v-if="genesis.pool_actuals_calculated_epoch != genesis.epoch - 2">
         <v-progress-circular
           color="grey"
@@ -509,10 +509,10 @@
           indeterminate
         ></v-progress-circular>
       </span>
-      <span v-else>{{ item.sixros | fpercent }}</span>
+      <span v-else>{{ item.one_month_ros | fpercent }}</span>
     </template>
 
-    <template #[`item.twelveros`]="{ item }">
+    <template #[`item.two_month_ros`]="{ item }">
       <span v-if="genesis.pool_actuals_calculated_epoch != genesis.epoch - 2">
         <v-progress-circular
           color="grey"
@@ -521,7 +521,7 @@
           indeterminate
         ></v-progress-circular>
       </span>
-      <span v-else>{{ item.twelveros | fpercent }}</span>
+      <span v-else>{{ item.two_month_ros | fpercent }}</span>
     </template>
 
     <template #[`item.lifetime_performance`]="{ item }">
@@ -533,8 +533,8 @@
         <favorite
           :size="18"
           :favorites="favorites"
-          :me="item.poolpubkey"
-          @fav-click="$emit('togglefavorite', item.poolpubkey)"
+          :me="item.pool_id"
+          @fav-click="$emit('togglefavorite', item.pool_id)"
         ></favorite>
       </span>
     </template>
@@ -544,7 +544,7 @@
           v-if="
             (item.assigned_slots != null) & (item.assigned_slots != 0) &&
             item.assigned_slots ==
-              (item.epochBlocksEpoch == genesis.epoch
+              (item.epoch_blocks_epoch == genesis.epoch
                 ? item.epoch_blocks
                 : 0) &&
             item.assigned_slots_epoch == genesis.epoch
@@ -561,7 +561,7 @@
             <span>Perfect Epoch!</span>
           </v-tooltip>
         </div>
-        {{ item.epochBlocksEpoch == genesis.epoch ? item.epoch_blocks : 0 }}
+        {{ item.epoch_blocks_epoch == genesis.epoch ? item.epoch_blocks : 0 }}
         {{
           item.assigned_slots != null &&
           item.assigned_slots_epoch == genesis.epoch

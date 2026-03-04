@@ -54,7 +54,7 @@ export default {
         async updatePoolField(field,item, newvalue) {
             var writename="xxxx"
             switch(field) {
-                case 'groupname':
+                case 'group_name':
                     writename="g"
                 break;
             }
@@ -62,7 +62,7 @@ export default {
             var variables = {}
             variables[writename] = newvalue
             try {
-                await api.put(`/api/pool/${item.poolpubkey}/update`, variables);
+                await api.put(`/api/pool/${item.pool_id}/update`, variables);
             } catch (e) {
                 console.error("Failed to update pool field", e);
             }
@@ -73,10 +73,10 @@ export default {
             items.sort((a, b) => {
                 switch (index[0]) {
                     case 'height':
-                        a['height']=a.poolpubkey in this.heights?this.heights[a.poolpubkey]:0
-                        b['height']=b.poolpubkey in this.heights?this.heights[b.poolpubkey]:0
+                        a['height']=a.pool_id in this.heights?this.heights[a.pool_id]:0
+                        b['height']=b.pool_id in this.heights?this.heights[b.pool_id]:0
                         if (a['height'] == 1 && b['height'] == 1) {
-                            return a['poolpubkey'] < b['poolpubkey'] ? (isDesc[0] ? -1 : 1) : (!isDesc[0] ? -1 : 1)
+                            return a['pool_id'] < b['pool_id'] ? (isDesc[0] ? -1 : 1) : (!isDesc[0] ? -1 : 1)
 
                         } else if (a['height'] == 1 && b['height'] != 1) {
                             return (isDesc[0] ? -1 : 1)
@@ -90,7 +90,7 @@ export default {
                             if (a['height'] != b['height']) {
                                 return a['height'] > b['height'] ? (isDesc[0] ? -1 : 1) : (!isDesc[0] ? -1 : 1)
                             } else {
-                                return a['poolpubkey'] < b['poolpubkey'] ? (isDesc[0] ? -1 : 1) : (!isDesc[0] ? -1 : 1)
+                                return a['pool_id'] < b['pool_id'] ? (isDesc[0] ? -1 : 1) : (!isDesc[0] ? -1 : 1)
                             }
 
                         } else if (a['height'] == 0 || a['height'] == null) {
@@ -125,8 +125,8 @@ export default {
                         // } else {
                         //     sortb = b['pool_name'].trim()
                         // }
-                        sorta = 'pool_name' in a&&typeof a['pool_name'] != "undefined"&&a['pool_name']!=null?a['pool_name'].trim():a['poolpubkey']
-                        sortb = 'pool_name' in b&&typeof b['pool_name'] != "undefined"&&b['pool_name']!=null?b['pool_name'].trim():b['poolpubkey']
+                        sorta = 'pool_name' in a&&typeof a['pool_name'] != "undefined"&&a['pool_name']!=null?a['pool_name'].trim():a['pool_id']
+                        sortb = 'pool_name' in b&&typeof b['pool_name'] != "undefined"&&b['pool_name']!=null?b['pool_name'].trim():b['pool_id']
                         if (!isDesc[0]) {
                             return sorta < sortb ? -1 : 1;
                         } else {
@@ -147,9 +147,9 @@ export default {
                     case "blockstake":
                     case "activestakepercent":
                         if (!isDesc[0]) {
-                            return parseInt((a['poolpubkey'] in this.activestake&&this.activestake[a['poolpubkey']])?this.activestake[a['poolpubkey']]:0) < parseInt((b['poolpubkey'] in this.activestake&&this.activestake[b['poolpubkey']])?this.activestake[b['poolpubkey']]:0) ? -1 : 1;
+                            return parseInt((a['pool_id'] in this.activestake&&this.activestake[a['pool_id']])?this.activestake[a['pool_id']]:0) < parseInt((b['pool_id'] in this.activestake&&this.activestake[b['pool_id']])?this.activestake[b['pool_id']]:0) ? -1 : 1;
                         } else {
-                            return parseInt((b['poolpubkey'] in this.activestake&&this.activestake[b['poolpubkey']])?this.activestake[b['poolpubkey']]:0) < parseInt((a['poolpubkey'] in this.activestake&&this.activestake[a['poolpubkey']])?this.activestake[a['poolpubkey']]:0) ? -1 : 1;
+                            return parseInt((b['pool_id'] in this.activestake&&this.activestake[b['pool_id']])?this.activestake[b['pool_id']]:0) < parseInt((a['pool_id'] in this.activestake&&this.activestake[a['pool_id']])?this.activestake[a['pool_id']]:0) ? -1 : 1;
                         }
                         /* eslint-disable no-unreachable */
                         break
@@ -157,15 +157,15 @@ export default {
                     case "epoch_blocks":
                     case "epoch_blocks_percent":
                         if (!isDesc[0]) {
-                            return parseInt(a['epochBlocksEpoch']==this.genesis.epoch?a['epoch_blocks']:0) < parseInt(b['epochBlocksEpoch']==this.genesis.epoch?b['epoch_blocks']:0) ? -1 : 1;
+                            return parseInt(a['epoch_blocks_epoch']==this.genesis.epoch?a['epoch_blocks']:0) < parseInt(b['epoch_blocks_epoch']==this.genesis.epoch?b['epoch_blocks']:0) ? -1 : 1;
                         } else {
-                            return parseInt(b['epochBlocksEpoch']==this.genesis.epoch?b['epoch_blocks']:0) < parseInt(a['epochBlocksEpoch']==this.genesis.epoch?a['epoch_blocks']:0) ? -1 : 1;
+                            return parseInt(b['epoch_blocks_epoch']==this.genesis.epoch?b['epoch_blocks']:0) < parseInt(a['epoch_blocks_epoch']==this.genesis.epoch?a['epoch_blocks']:0) ? -1 : 1;
                         }
                         /* eslint-disable no-unreachable */
                         break
                     case "lifetimeroi":
-                        a.lifetimeroi=a.poolpubkey in this.rewards&&'lifetimeRos' in this.rewards[a.poolpubkey]?this.rewards[a.poolpubkey]['lifetimeRos']:0
-                        b.lifetimeroi=b.poolpubkey in this.rewards&&'lifetimeRos' in this.rewards[b.poolpubkey]?this.rewards[b.poolpubkey]['lifetimeRos']:0
+                        a.lifetimeroi=a.pool_id in this.rewards&&'lifetimeRos' in this.rewards[a.pool_id]?this.rewards[a.pool_id]['lifetimeRos']:0
+                        b.lifetimeroi=b.pool_id in this.rewards&&'lifetimeRos' in this.rewards[b.pool_id]?this.rewards[b.pool_id]['lifetimeRos']:0
                         if (!isDesc[0]) {
                             return a.lifetimeroi < b.lifetimeroi ? -1 : 1;
                         } else {
@@ -175,8 +175,8 @@ export default {
                         /* eslint-disable no-unreachable */
                         break
                     case 'roi':
-                        b['roi']=b['poolpubkey'] in this.rewards?this.rewards[b['poolpubkey']]['epochRos']:0
-                        a['roi']=a['poolpubkey'] in this.rewards?this.rewards[a['poolpubkey']]['epochRos']:0
+                        b['roi']=b['pool_id'] in this.rewards?this.rewards[b['pool_id']]['epochRos']:0
+                        a['roi']=a['pool_id'] in this.rewards?this.rewards[a['pool_id']]['epochRos']:0
                         if (!isDesc[0]) { //low on top to high
                             if (b['roi'] == 0 || b['roi'] == null) return 1
                             if (a['roi'] == 0 || a['roi'] == null) return -1
@@ -189,8 +189,8 @@ export default {
                         /* eslint-disable no-unreachable */
                         break
                     case 'roifcp1':
-                        b['roifcp1']=b['poolpubkey'] in this.rewardsnp1?this.rewardsnp1[b['poolpubkey']]['epochRos']:0
-                        a['roifcp1']=a['poolpubkey'] in this.rewardsnp1?this.rewardsnp1[a['poolpubkey']]['epochRos']:0
+                        b['roifcp1']=b['pool_id'] in this.rewardsnp1?this.rewardsnp1[b['pool_id']]['epochRos']:0
+                        a['roifcp1']=a['pool_id'] in this.rewardsnp1?this.rewardsnp1[a['pool_id']]['epochRos']:0
                         if (!isDesc[0]) { //low on top to high
                             if (b['roifcp1'] == 0 || b['roifcp1'] == null) return 1
                             if (a['roifcp1'] == 0 || a['roifcp1'] == null) return -1
@@ -203,8 +203,8 @@ export default {
                         /* eslint-disable no-unreachable */
                         break
                     case 'favorite':
-                        var aindx = this.favorites.indexOf(a['poolpubkey'])
-                        var bindx = this.favorites.indexOf(b['poolpubkey'])
+                        var aindx = this.favorites.indexOf(a['pool_id'])
+                        var bindx = this.favorites.indexOf(b['pool_id'])
                         if (!isDesc[0]) { //low on top to high
 
                             if (aindx == -1) {
@@ -225,7 +225,7 @@ export default {
                         }
                         /* eslint-disable no-unreachable */
                         break
-                    case 'poolcost':
+                    case 'cost':
                         /* eslint-disable no-unreachable */
                         if (!isDesc[0]) {
                             return a[index[0]] < b[index[0]] ? -1 : 1;
@@ -233,7 +233,7 @@ export default {
                             return b[index[0]] < a[index[0]] ? -1 : 1;
                         }
                         break
-                    case 'poolmargin':
+                    case 'margin':
                         if(typeof a[index[0]] == "undefined" || isNaN(a[index[0]])) a[index[0]]=0
                         if(typeof b[index[0]] == "undefined"|| isNaN(b[index[0]])) b[index[0]]=0
                         

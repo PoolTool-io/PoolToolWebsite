@@ -325,8 +325,8 @@ export default {
     network: function () {
       return this.$store.getters.getNetwork;
     },
-    poolpubkey: function () {
-      return this.pool.poolpubkey;
+    pool_id: function () {
+      return this.pool.pool_id;
     },
     graph_expected: function () {
       var p = this.pool.blockstake / this.genesis.livedata2.total_blockstake;
@@ -348,7 +348,7 @@ export default {
       var cumprobstart = 0;
       var cumprob = 0;
       var epoch_blocks =
-        this.pool.epochBlocksEpoch == this.genesis.epoch
+        this.pool.epoch_blocks_epoch == this.genesis.epoch
           ? this.pool.epoch_blocks
           : 0;
 
@@ -422,7 +422,7 @@ export default {
 
         this.getJSON(
           "https://s3-us-west-2.amazonaws.com/data.pooltool.io/stats/pools/" +
-            this.pool.poolpubkey +
+            this.pool.pool_id +
             "/by_producer.json?t=" +
             Date.now(),
           function (err, thisdata) {
@@ -450,7 +450,7 @@ export default {
 
         this.getJSON(
           "https://s3-us-west-2.amazonaws.com/data.pooltool.io/stats/pools/" +
-            this.pool.poolpubkey +
+            this.pool.pool_id +
             "/by_receiver.json?t=" +
             Date.now(),
           function (err, thisdata) {
@@ -479,7 +479,7 @@ export default {
     },
   },
   watch: {
-    poolpubkey: {
+    pool_id: {
       // call it upon creation too
       immediate: true,
       handler(v) {

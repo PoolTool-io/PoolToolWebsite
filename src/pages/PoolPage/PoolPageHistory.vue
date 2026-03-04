@@ -46,7 +46,7 @@
           <download-csv
             class="mx-2"
             :data="merged_history"
-            :name="'poolRewards' + pool.poolpubkey + '.csv'"
+            :name="'poolRewards' + pool.pool_id + '.csv'"
           >
             <v-btn
               style="margin-top: 2px"
@@ -476,8 +476,10 @@ export default {
     pool: {
       immediate: true,
       async handler(pool) {
+        const poolId = pool && pool.pool_id;
+        if (!poolId) return;
         try {
-          const { data } = await getPoolHistory(pool.poolpubkey);
+          const { data } = await getPoolHistory(poolId);
           if (data) {
             this.block_history = data.blocks || {};
             this.slots_history = data.assigned_slots || {};

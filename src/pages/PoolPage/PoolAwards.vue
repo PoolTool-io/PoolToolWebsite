@@ -120,7 +120,7 @@ export default {
     },
 
     refetch_watch: function () {
-      return this.pool.poolpubkey;
+      return this.pool.pool_id;
     },
     awards: function () {
       return this.awards_itn
@@ -134,7 +134,7 @@ export default {
       async handler() {
         if (typeof this.pool !== "undefined") {
           try {
-            const { data } = await getPoolAwards(this.pool.poolpubkey);
+            const { data } = await getPoolAwards(this.pool.pool_id);
             if (data) {
               this.awards_itn_raw = data.itn || {};
               this.awards_raw = data.cardano || {};

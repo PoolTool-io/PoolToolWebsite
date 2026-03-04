@@ -458,12 +458,12 @@ export default {
     poolCountsByGroup: function () {
       var poolcounts = {};
       this.pools.forEach((item) => {
-        if (!item.pool_retired && !item.genesis_pool) {
-          if (item.groupname != null && item.groupname != "") {
-            if (typeof poolcounts[item.groupname] == "undefined") {
-              poolcounts[item.groupname] = 1;
+        if (!item.retired && !item.genesis) {
+          if (item.group_name != null && item.group_name != "") {
+            if (typeof poolcounts[item.group_name] == "undefined") {
+              poolcounts[item.group_name] = 1;
             } else {
-              poolcounts[item.groupname] += 1;
+              poolcounts[item.group_name] += 1;
             }
           }
         }
@@ -474,28 +474,28 @@ export default {
       /* eslint-disable no-unused-vars */
       return this.pools.filter((item) => {
         if (
-          item["poolpledge"] / 1e6 <
+          item["pledge"] / 1e6 <
             this.pledgeValues[this.appliedfilters.pledgeRange[0]] ||
           (this.appliedfilters.pledgeRange[1] != 12 &&
-            item["poolpledge"] / 1e6 >
+            item["pledge"] / 1e6 >
               this.pledgeValues[this.appliedfilters.pledgeRange[1]])
         ) {
           return false;
         }
         if (
-          item["poolcost"] / 1e6 <
+          item["cost"] / 1e6 <
             this.epochFeeValues[this.appliedfilters.epochFeeRange[0]] ||
           (this.appliedfilters.epochFeeRange[1] != 9 &&
-            item["poolcost"] / 1e6 >
+            item["cost"] / 1e6 >
               this.epochFeeValues[this.appliedfilters.epochFeeRange[1]])
         ) {
           return false;
         }
 
         if (
-          parseFloat(item["poolmargin"]) <
+          parseFloat(item["margin"]) <
             this.feeValues[this.appliedfilters.marginrange[0]] ||
-          parseFloat(item["poolmargin"]) >
+          parseFloat(item["margin"]) >
             this.feeValues[this.appliedfilters.marginrange[1]]
         ) {
           return false;
@@ -507,11 +507,11 @@ export default {
           return false;
         }
         if (this.appliedfilters.solo) {
-          if (item["groupname"] != null && item["groupname"] != "") {
+          if (item["group_name"] != null && item["group_name"] != "") {
             //additional check to see how many pools they have
             if (
-              typeof this.poolCountsByGroup[item["groupname"]] != "undefined" &&
-              this.poolCountsByGroup[item["groupname"]] > 1
+              typeof this.poolCountsByGroup[item["group_name"]] != "undefined" &&
+              this.poolCountsByGroup[item["group_name"]] > 1
             ) {
               return false;
             }
@@ -520,8 +520,8 @@ export default {
         if (this.appliedfilters.syncd) {
           if (
             !(
-              item["poolpubkey"] in this.heights &&
-              this.heights[item["poolpubkey"]] == 1
+              item["pool_id"] in this.heights &&
+              this.heights[item["pool_id"]] == 1
             )
           ) {
             return false;
@@ -533,7 +533,7 @@ export default {
           }
         }
         if (this.appliedfilters.poolsFavorite) {
-          if (this.favorites.indexOf(item["poolpubkey"]) == -1) {
+          if (this.favorites.indexOf(item["pool_id"]) == -1) {
             return false;
           }
         }
@@ -549,11 +549,11 @@ export default {
         }
 
         if (this.appliedfilters.poolsRetired == false) {
-          if (item["pool_retired"] == true) {
+          if (item["retired"] == true) {
             return false;
           }
         } else {
-          if (item["pool_retired"] == false) {
+          if (item["retired"] == false) {
             return false;
           }
         }
@@ -582,8 +582,8 @@ export default {
                   .toString()
                   .toLocaleUpperCase()
                   .indexOf(search) !== -1) ||
-              (typeof item["poolpubkey"] === "string" &&
-                item["poolpubkey"]
+              (typeof item["pool_id"] === "string" &&
+                item["pool_id"]
                   .toString()
                   .toLocaleUpperCase()
                   .indexOf(search) !== -1)
@@ -677,13 +677,13 @@ export default {
         defaultValue: [
           "favorite",
           "ticker",
-          "poolcost",
-          "poolmargin",
-          "poolpledge",
+          "cost",
+          "margin",
+          "pledge",
           "epoch_blocks",
           "height",
           "life_blocks",
-          "twelveros",
+          "two_month_ros",
         ],
       },
     }),
@@ -705,14 +705,14 @@ export default {
         h.push({
           text: "GROUP",
           align: "center",
-          value: "groupname",
+          value: "group_name",
           divider: true,
           sortable: true,
           filterable: false,
         });
         hl.push({
           text: "GROUP",
-          value: "groupname",
+          value: "group_name",
         });
       }
 
@@ -756,23 +756,9 @@ export default {
           value: "pool_name",
         });
 
-        if (this.viewcolumns.includes("poolpubkey")) {
+        if (this.viewcolumns.includes("cost")) {
           h.push({
-            value: "poolpubkey",
-            sortable: true,
-            align: "start",
-            text: this.$t("global.poolID"),
-            divider: true,
-          });
-        }
-        hl.push({
-          text: this.$t("global.poolID"),
-          value: "poolpubkey",
-        });
-
-        if (this.viewcolumns.includes("poolcost")) {
-          h.push({
-            value: "poolcost",
+            value: "cost",
             sortable: true,
             align: "end",
             text: this.$t("global.epochFee") + " (₳)",
@@ -780,12 +766,12 @@ export default {
         }
         hl.push({
           text: this.$t("global.epochFee"),
-          value: "poolcost",
+          value: "cost",
         });
 
-        if (this.viewcolumns.includes("poolmargin")) {
+        if (this.viewcolumns.includes("margin")) {
           h.push({
-            value: "poolmargin",
+            value: "margin",
             sortable: true,
             align: "end",
             text: this.$t("global.variableFee"),
@@ -793,12 +779,12 @@ export default {
         }
         hl.push({
           text: this.$t("global.variableFee"),
-          value: "poolmargin",
+          value: "margin",
         });
 
-        if (this.viewcolumns.includes("poolpledge")) {
+        if (this.viewcolumns.includes("pledge")) {
           h.push({
-            value: "poolpledge",
+            value: "pledge",
             sortable: true,
             align: "end",
             divider: true,
@@ -807,7 +793,7 @@ export default {
         }
         hl.push({
           text: this.$t("global.declaredPledge"),
-          value: "poolpledge",
+          value: "pledge",
         });
       if (this.viewcolumns.includes("roi")) {
           h.push({
@@ -944,29 +930,29 @@ export default {
       });
       // h.push({ text: 'Lifetime Rewards (₳)', align: 'right', value: 'lifetimerewards', filterable: false, })
 
-      if (this.viewcolumns.includes("sixros")) {
+      if (this.viewcolumns.includes("one_month_ros")) {
           h.push({
             text: this.$t("global.sixros"),
             align: "center",
-            value: "sixros",
+            value: "one_month_ros",
             filterable: true,
           });
         }
         hl.push({
           text: this.$t("global.sixros"),
-          value: "sixros",
+          value: "one_month_ros",
         });
-        if (this.viewcolumns.includes("twelveros")) {
+        if (this.viewcolumns.includes("two_month_ros")) {
           h.push({
             text: this.$t("global.twelveros"),
             align: "center",
-            value: "twelveros",
+            value: "two_month_ros",
             filterable: true,
           });
         }
         hl.push({
           text: this.$t("global.twelveros"),
-          value: "twelveros",
+          value: "two_month_ros",
         });
         if (this.viewcolumns.includes("lifetimeroi")) {
           h.push({
@@ -1038,13 +1024,13 @@ export default {
       this.viewcolumns = [
         "favorite",
         "ticker",
-        "poolcost",
-        "poolmargin",
-        "poolpledge",
+        "cost",
+        "margin",
+        "pledge",
         "epoch_blocks",
         "height",
         "life_blocks",
-        "twelveros",
+        "two_month_ros",
       ];
   },
   methods: {

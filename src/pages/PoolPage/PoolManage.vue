@@ -633,7 +633,7 @@ export default {
       }
       w[field] = newvalue;
       try {
-        await api.put(`/api/pool/${this.pool.poolpubkey}/stats`, w);
+        await api.put(`/api/pool/${this.pool.pool_id}/stats`, w);
       } catch (e) {
         console.error("Failed to update pool field", e);
       }
@@ -641,8 +641,8 @@ export default {
   },
 
   computed: {
-    poolpubkey: function () {
-      return this.pool.poolpubkey;
+    pool_id: function () {
+      return this.pool.pool_id;
     },
     publicnote: function () {
       return this.poolstats.public_note;

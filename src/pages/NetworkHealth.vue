@@ -1318,7 +1318,7 @@ export default {
     poolindex: function () {
       var pi = {};
       this.pools.forEach(function (arrayItem) {
-        pi[arrayItem.poolpubkey] = arrayItem.ticker;
+        pi[arrayItem.pool_id] = arrayItem.ticker;
       });
       return pi;
     },
@@ -1329,12 +1329,12 @@ export default {
 
     community_blocks: function () {
       return this.pools.reduce(function (a, b) {
-        return a + (!b["genesis_pool"] ? parseInt(b["epoch_blocks"]) : 0);
+        return a + (!b["genesis"] ? parseInt(b["epoch_blocks"]) : 0);
       }, 0);
     },
     genesis_blocks: function () {
       return this.pools.reduce(function (a, b) {
-        return a + (b["genesis_pool"] ? parseInt(b["epoch_blocks"]) : 0);
+        return a + (b["genesis"] ? parseInt(b["epoch_blocks"]) : 0);
       }, 0);
     },
     isInactive: function () {

@@ -52,7 +52,7 @@
           >{{ $t("app.poolPage.manage") }}</v-tab
         >
         <v-tab
-          v-if="!pool.genesis_pool && network == 'Mainnet'"
+          v-if="!pool.genesis && network == 'Mainnet'"
           :to="'/pool/' + this.$route.params.poolid + '/awards'"
           >{{ $t("app.poolPage.awards") }}</v-tab
         >
@@ -157,9 +157,11 @@ export default {
       var ls = this.$store.getters.getPools;
       if (this.poolindex != null) {
         var selected_pool = ls[this.poolindex];
-        console.log(this.rewards);
         selected_pool["height"] = this.heights;
-        selected_pool["blockstake"] = this.activestake;
+        selected_pool["blockstake"] =
+          (this.activestake != null && this.activestake !== 0)
+            ? this.activestake
+            : (selected_pool.live_stake != null ? selected_pool.live_stake : 0);
 
         selected_pool["roi"] =
           this.rewards["epochRos"] != null ? this.rewards["epochRos"] : 0;
@@ -248,19 +250,13 @@ export default {
     },
 
     reward_address: function () {
-      return this.poolstats.reward_address;
+      return this.poolstats.reward_account;
     },
     owners: function () {
-      if (
-        this.poolstats != null &&
-        typeof this.poolstats.owners != "undefined"
-      ) {
-        return this.poolstats.owners;
-      }
-      return [];
+      return this.poolstats.pool_owners != null ? this.poolstats.pool_owners : [];
     },
     refetch_watch: function () {
-      return this.pool.poolpubkey;
+      return this.pool.pool_id;
     },
     network: function () {
       return this.$store.getters.getNetwork;

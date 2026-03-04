@@ -248,7 +248,7 @@ export default {
         this.exploreblocks = [];
         if (typeof this.pool !== "undefined") {
           try {
-            const { data } = await getPoolBlocks(this.pool.poolpubkey, this.target_epoch);
+            const { data } = await getPoolBlocks(this.pool.pool_id, this.target_epoch);
             this.blocks_raw = data || {};
           } catch (e) {
             console.error("Failed to fetch pool blocks", e);
@@ -264,7 +264,7 @@ export default {
     },
 
     refetch_watch: function () {
-      return this.pool.poolpubkey + this.target_epoch;
+      return this.pool.pool_id + this.target_epoch;
     },
     blocks: function () {
       var a = [];

@@ -162,11 +162,9 @@ export default {
       return this.genesis.total_utxo;
     },
     epochrewardpot: function () {
-      var er =
-        this.genesis.livedata1_old.reserves *
-        this.genesis.livedata1_old.rho *
-        (1 - this.genesis.livedata1_old.tau);
-      if (typeof this.genesis.prices[this.currency] != "undefined") {
+      const er = this.genesis.epoch_reward_pot;
+      if (er == null) return 0;
+      if (typeof this.genesis.prices[this.currency] !== "undefined") {
         return er * this.genesis.prices[this.currency];
       }
       return er;
@@ -175,12 +173,24 @@ export default {
       return this.$store.getters.getNetwork == "Mainnet";
     },
     countdowntimer: function () {
-      var value =
-        this.genesis.epochLength - this.genesis.slot_in_epoch + this.now / 1000;
+      const epochLength = this.genesis.epochLength;
+      const slotInEpoch = this.genesis.slot_in_epoch;
+      if (
+        epochLength == null ||
+        slotInEpoch == null ||
+        !Number.isFinite(epochLength) ||
+        !Number.isFinite(slotInEpoch)
+      ) {
+        return "—";
+      }
+      let value =
+        epochLength - slotInEpoch + this.now / 1000;
       if (value * 1000 < this.now) {
         value = this.now / 1000;
       }
-      return formatDistanceToNow(value * 1000);
+      const ts = value * 1000;
+      if (!Number.isFinite(ts)) return "—";
+      return formatDistanceToNow(ts);
     },
     totalstakepercent: function () {
       if (this.genesis.total_utxo > 0) {

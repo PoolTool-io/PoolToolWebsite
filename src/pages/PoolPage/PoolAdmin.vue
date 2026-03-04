@@ -93,7 +93,7 @@ export default {
       async handler() {
         if (this.poolnetwork != "") {
           try {
-            const { data } = await api.get(`/api/admin/delegator_update/${this.pool.poolpubkey}`);
+            const { data } = await api.get(`/api/admin/delegator_update/${this.pool.pool_id}`);
             this.delegatorUpdate = data || {};
           } catch (e) {
             this.delegatorUpdate = {};
@@ -107,9 +107,9 @@ export default {
     updatedelegatorUpdate: async function (event) {
       try {
         if (event) {
-          await api.put(`/api/admin/delegator_update/${this.pool.poolpubkey}`, { value: true });
+          await api.put(`/api/admin/delegator_update/${this.pool.pool_id}`, { value: true });
         } else {
-          await api.delete(`/api/admin/delegator_update/${this.pool.poolpubkey}`);
+          await api.delete(`/api/admin/delegator_update/${this.pool.pool_id}`);
         }
       } catch (e) {
         console.error("Failed to update delegator update", e);
@@ -119,7 +119,7 @@ export default {
       var w = {};
       w[field] = newvalue;
       try {
-        await api.put(`/api/pool/${this.pool.poolpubkey}/update`, w);
+        await api.put(`/api/pool/${this.pool.pool_id}/update`, w);
       } catch (e) {
         console.error("Failed to update pool field", e);
       }
@@ -137,9 +137,9 @@ export default {
       if (
         typeof this.network != "undefined" &&
         typeof this.pool != "undefined" &&
-        typeof this.pool.poolpubkey != "undefined"
+        typeof this.pool.pool_id != "undefined"
       ) {
-        return this.network.concat(this.pool.poolpubkey);
+        return this.network.concat(this.pool.pool_id);
       } else {
         return "";
       }

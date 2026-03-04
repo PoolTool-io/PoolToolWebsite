@@ -24,7 +24,6 @@
           :options="curveplotoptions"
         ></line-bar-chart>
       </v-card-text>
-      {{ simulateRewards["datasets"]["vline"] }}
     </v-card>
   </div>
 </template>
@@ -66,7 +65,7 @@ export default {
                 if (context.datasetIndex == 2) {
                   return null;
                 }
-                return label + numeral(context.raw).format("0.00%");
+                return label + numeral(context.raw * 100).format("0.00") + "%";
               },
             },
           },
@@ -108,7 +107,7 @@ export default {
               color: "#fff",
               //max: 0.25,
               callback: function (value) {
-                return numeral(value).format("0.00%");
+                return numeral(value * 100).format("0.00") + "%";
               },
             },
             title: {
@@ -146,6 +145,38 @@ export default {
         labels: [],
         datasets: [],
       };
+      if (
+        !this.genesis ||
+        !this.pool ||
+        !this.genesis.livedata1 ||
+        !this.genesis.livedata2
+      ) {
+        var missing = [];
+        if (!this.genesis) missing.push("genesis");
+        if (!this.pool) missing.push("pool");
+        if (this.genesis && !this.genesis.livedata1) missing.push("genesis.livedata1");
+        if (this.genesis && !this.genesis.livedata2) missing.push("genesis.livedata2");
+        console.warn("[SaturationCurve] Missing required data:", missing);
+        return retdata;
+      }
+      var ld1 = this.genesis.livedata1;
+      var ld2 = this.genesis.livedata2;
+      var total_blockstake = ld2.total_blockstake;
+      if (total_blockstake <= 0) {
+        console.warn(
+          "[SaturationCurve] Cannot draw curve: total_blockstake is missing or zero",
+          { total_blockstake }
+        );
+        return retdata;
+      }
+      var total_supply = 45e15 - (ld1.reserves != null ? ld1.reserves : 0);
+      if (total_supply <= 0) {
+        console.warn(
+          "[SaturationCurve] Cannot draw curve: total_supply is invalid (reserves may exceed 45e15)",
+          { total_supply, reserves: ld1.reserves }
+        );
+        return retdata;
+      }
       var kvals = [750, 500];
       var kvallabel = ["K=750 (proposed by IOG)", "K=500(current)"];
       var hereline = [];
@@ -159,14 +190,13 @@ export default {
       var total_epoch_blocks = total_expected_blocks;
       total_epoch_blocks = 21048;
       var rewardpot = parseInt(
-        (this.genesis.livedata1.reserves *
+        ((ld1.reserves != null ? ld1.reserves : 0) *
           (total_epoch_blocks / total_expected_blocks) *
-          this.genesis.livedata1.rho +
+          (ld1.rho != null ? ld1.rho : 0) +
           txfees) *
-          (1 - this.genesis.livedata1.tau)
+          (1 - (ld1.tau != null ? ld1.tau : 0))
       );
       var term1 = rewardpot;
-      var total_supply = 45e15 - this.genesis.livedata1.reserves;
       for (var kindex in kvals) {
         retdata["datasets"][kindex] = {
           type: "line",
@@ -183,13 +213,19 @@ export default {
           xAxisID: "xAxes",
         };
         var termz0 = 1 / kvals[kindex];
-        var sprime = Math.min(this.pool.poolpledge / total_supply, termz0);
+        var sprime = Math.min(
+          (this.pool.pledge != null ? this.pool.pledge : 0) /
+            total_supply,
+          termz0
+        );
         for (var i = 0; i < 75; i = i + 0.5) {
           if (kvals[kindex] == 500) {
             retdata["labels"].push(i);
+            var blockstake =
+              this.pool.blockstake != null ? this.pool.blockstake : 0;
             if (
-              this.pool.blockstake > i * 1e12 &&
-              this.pool.blockstake <= (i + 0.5) * 1e12
+              blockstake > i * 1e12 &&
+              blockstake <= (i + 0.5) * 1e12
             ) {
               hereline.push(1);
             } else {
@@ -199,8 +235,7 @@ export default {
           var sigmaprime = Math.min((i * 1e12) / total_supply, termz0);
 
           var expected_blocks =
-            ((i * 1e12) / this.genesis.livedata2.total_blockstake) *
-            total_expected_blocks;
+            ((i * 1e12) / total_blockstake) * total_expected_blocks;
 
           var pledgemultiplier = 1;
 
@@ -208,14 +243,18 @@ export default {
             pledgemultiplier *
             ((((sigmaprime - (1 - sigmaprime / termz0) * sprime) / termz0) *
               sprime *
-              this.genesis.livedata1.a0 +
+              (ld1.a0 != null ? ld1.a0 : 0) +
               sigmaprime) *
               term1);
 
           var performance_adjusted_optimal_rewards = thisoptimalrewards;
 
           var pool_cost_to_use =
-            this.minFee && kindex == 0 ? 30000000 : this.pool.poolcost;
+            this.minFee && kindex == 0
+              ? 30000000
+              : this.pool.cost != null
+              ? this.pool.cost
+              : 0;
           var adjusted_pool_cost_to_use =
             expected_blocks < 1
               ? pool_cost_to_use * expected_blocks
@@ -225,7 +264,9 @@ export default {
             0,
             performance_adjusted_optimal_rewards - adjusted_pool_cost_to_use
           );
-          var pool_margin_fees = afterfixedcostrewards * this.pool.poolmargin;
+          var pool_margin_fees =
+            afterfixedcostrewards *
+            (this.pool.margin != null ? this.pool.margin / 100 : 0);
           var aftervariablecostrewards =
             afterfixedcostrewards - pool_margin_fees;
           var calc_roi =
@@ -239,7 +280,7 @@ export default {
         legend: { hidden: true },
         yAxisID: "yAxes1",
         xAxisID: "xAxes",
-        label: this.pool.ticker,
+        label: this.pool.ticker != null ? this.pool.ticker : "",
         backgroundColor: "rgb(255,0,0," + this.transparency + ")",
         borderColor: "rgb(255,0,0," + this.transparency + ")",
         data: hereline,

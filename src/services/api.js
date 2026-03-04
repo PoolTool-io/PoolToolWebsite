@@ -1,27 +1,17 @@
 /**
  * Central API client for the PoolTool 2026 backend.
- * Replaces all Firebase RTDB reads and api.pooltool.io REST calls.
+ * REST and WebSocket contracts follow docs/FRONTEND_API_SPEC.md.
+ * API host is hardcoded to 34.209.51.89:3004.
  */
 import axios from "axios";
 
-function resolveApiBase() {
-  if (process.env.VUE_APP_API_URL) return process.env.VUE_APP_API_URL;
-  if (typeof window !== "undefined") {
-    return `${window.location.protocol}//${window.location.hostname}:3004`;
-  }
-  return "http://localhost:3004";
-}
+const API_HOST = "34.209.51.89:3004";
+const API_BASE = `http://${API_HOST}`;
 
 const api = axios.create({
-  baseURL: "",
+  baseURL: API_BASE,
   timeout: 15000,
   headers: { "Content-Type": "application/json" },
-});
-
-// Resolve API base at request time so the app works from any host (no baked localhost).
-api.interceptors.request.use((config) => {
-  config.baseURL = resolveApiBase();
-  return config;
 });
 
 // ── Auth ──────────────────────────────────────────────
@@ -78,8 +68,8 @@ export function getPool(poolId) {
   return api.get(`/api/pool/${poolId}`);
 }
 
-export function getPoolHistory(poolId) {
-  return api.get(`/api/pool/${poolId}/history`);
+export function getPoolHistory(poolId, limit = 30) {
+  return api.get(`/api/pool/${poolId}/history`, { params: limit != null ? { limit } : {} });
 }
 
 export function getPoolBlocks(poolId, epoch) {
@@ -132,7 +122,22 @@ export function getHeights() {
   return api.get("/api/heights");
 }
 
-// ── Rewards ───────────────────────────────────────────
+// ── Translations / i18n (§2.7) ─────────────────────────
+
+export function getTranslations() {
+  return api.get("/api/translations");
+}
+
+export function getTranslationsLocale(locale) {
+  return api.get(`/api/translations/${locale}`);
+}
+
+export function getLanguages() {
+  return api.get("/api/languages");
+}
+
+// ── Rewards / stake ───────────────────────────────────
+// pivotRewards: max 5 keys per spec §2.5
 
 export function getStakeHist(address) {
   return api.get(`/api/stake_hist/${address}`);
@@ -140,7 +145,7 @@ export function getStakeHist(address) {
 
 export function pivotRewards(stakeKeys) {
   const keys = Array.isArray(stakeKeys) ? stakeKeys : [stakeKeys];
-  return api.post("/api/pivotrewards", { stake_keys: keys });
+  return api.post("/api/pivotrewards", { stake_keys: keys.slice(0, 5) });
 }
 
 // ── Health ────────────────────────────────────────────

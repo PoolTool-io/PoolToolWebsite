@@ -20,54 +20,46 @@ Vue.use(Vuex);
 const network_raw = preference("network", { defaultValue: "Mainnet" });
 
 function convertPool(a, state) {
-  var b = {
-    poolpubkey: a.id != null ? a.id : a.poolpubkey || "",
-    ticker: "t" in a ? a.t : a.ticker || "",
-    groupname: "g" in a && a.g != null ? a.g.trim() : a.groupname || "",
-    pool_name: "n" in a ? a.n : a.pool_name || a.name || "",
-    live_stake: "ls" in a ? a.ls : a.live_stake || 0,
-    onlineRelays: a.o != null ? a.o : a.onlineRelays,
-    offlineRelays: a.oo != null ? a.oo : a.offlineRelays,
-    saturation: "s" in a ? a.s : a.saturation || 0,
-    poolcost: "f" in a ? a.f : a.poolcost || a.fixedFee || 0,
-    fpoolcost: "ff" in a ? a.ff : a.fpoolcost || a.afixedFee || 0,
-    poolmargin: "m" in a ? a.m / 100 : a.poolmargin != null ? a.poolmargin : (a.variableFee || 0) / 100,
-    fpoolmargin: "fm" in a ? a.fm / 100 : a.fpoolmargin != null ? a.fpoolmargin : (a.avariableFee || 0) / 100,
-    poolpledge: "p" in a ? a.p : a.poolpledge || a.pledge || 0,
-    fpoolpledge: "fp" in a ? a.fp : a.fpoolpledge || a.apledge || 0,
-    poolpledgevalue: "ap" in a ? a.ap : a.poolpledgevalue || a.actualPledge || 0,
-    itn_verified: "i" in a ? a.i : a.itn_verified || a.itnVerified,
-    epoch_blocks:
-      "b" in a
-        ? a.b != null ? a.b : 0
-        : a.epoch_blocks != null ? a.epoch_blocks : a.epochBlocks != null ? a.epochBlocks : 0,
-    epochBlocksEpoch:
-      "eb" in a
-        ? a.eb != null ? a.eb : 0
-        : a.epochBlocksEpoch != null ? a.epochBlocksEpoch : 0,
-    life_blocks:
-      "l" in a
-        ? a.l != null ? a.l : 0
-        : a.life_blocks != null ? a.life_blocks : a.totalBlocks != null ? a.totalBlocks : 0,
-    genesis_pool: "x" in a ? a.x : a.genesis_pool || a.isGenesis,
-    pool_retired: "d" in a ? a.d : a.pool_retired || a.isRetired,
-    assigned_slots: "z" in a ? a.z : a.assigned_slots || 0,
-    assigned_slots_epoch: "ez" in a ? a.ez : a.assigned_slots_epoch || 0,
-    imposter: "xx" in a ? a.xx : a.imposter,
-    lifetime_per_blocks: "zl" in a ? a.zl : a.lifetime_per_blocks || 0,
-    lifetime_per_slots: "zs" in a ? a.zs : a.lifetime_per_slots || 0,
-    lifetime_ros: "lros" in a ? a.lros : a.lifetime_ros || 0,
-    sixros: "sr" in a ? a.sr : a.sixros || 0,
-    twelveros: "tr" in a ? a.tr : a.twelveros || 0,
+  // Spec §4: descriptive keys only (no compressed keys).
+  const b = {
+    pool_id: a.pool_id ?? "",
+    ticker: a.ticker ?? "",
+    pool_name: a.pool_name ?? "",
+    group_name: (a.group_name != null ? a.group_name : "").trim(),
+    live_stake: a.live_stake ?? 0,
+    online_relays: a.online_relays != null ? a.online_relays : 0,
+    offline_relays: a.offline_relays != null ? a.offline_relays : 0,
+    saturation: a.saturation ?? 0,
+    cost: a.cost ?? 0,
+    future_cost: a.future_cost ?? null,
+    margin: a.margin != null ? a.margin : 0,
+    future_margin: a.future_margin != null ? a.future_margin : 0,
+    pledge: a.pledge ?? 0,
+    future_pledge: a.future_pledge ?? null,
+    pool_pledge_value: a.pool_pledge_value ?? 0,
+    itn_verified: a.itn_verified,
+    epoch_blocks: a.epoch_blocks ?? 0,
+    epoch_blocks_epoch: a.epoch_blocks_epoch ?? null,
+    life_blocks: a.life_blocks ?? 0,
+    genesis: a.genesis,
+    retired: a.retired,
+    assigned_slots: a.assigned_slots ?? 0,
+    assigned_slots_epoch: a.assigned_slots_epoch ?? null,
+    imposter: a.imposter,
+    lifetime_per_blocks: a.lifetime_per_blocks ?? 0,
+    lifetime_per_slots: a.lifetime_per_slots ?? 0,
+    lifetime_ros: a.lifetime_ros ?? 0,
+    one_month_ros: a.one_month_ros ?? 0,
+    two_month_ros: a.two_month_ros ?? 0,
   };
   if (
     b.lifetime_per_blocks > 0 &&
     b.lifetime_per_slots > 0 &&
     b.assigned_slots_epoch >= (state.sync_data.currentepoch || 0) - 1
   ) {
-    b["lifetime_performance"] = b.lifetime_per_blocks / b.lifetime_per_slots;
+    b.lifetime_performance = b.lifetime_per_blocks / b.lifetime_per_slots;
   } else {
-    b["lifetime_performance"] = null;
+    b.lifetime_performance = null;
   }
   return b;
 }
@@ -231,7 +223,7 @@ export const store = new Vuex.Store({
       commit("setUserDataPriv", {});
     },
 
-    async bindPools({ state }) {
+    async bindPools({ state, commit }) {
       if (state.poolsSubscribed) return;
       state.poolsSubscribed = true;
 
@@ -239,7 +231,7 @@ export const store = new Vuex.Store({
         const resp = await getPools();
         const poolsArr = resp.data;
         poolsArr.forEach((poolData) => {
-          const poolId = poolData.id || poolData.poolpubkey;
+          const poolId = poolData.pool_id ?? poolData.id;
           if (!poolId) return;
           const converted = convertPool(poolData, state);
           if (Object.keys(state.poolindex).indexOf(poolId) === -1) {
@@ -249,6 +241,7 @@ export const store = new Vuex.Store({
             Vue.set(state.pools, state.poolindex[poolId], converted);
           }
         });
+        commit("setActivestakeFromPools");
       } catch (e) {
         console.warn("Failed to load pools:", e);
       }
@@ -257,7 +250,7 @@ export const store = new Vuex.Store({
       wsClient.subscribe("pools", {}, (data) => {
         if (Array.isArray(data)) {
           data.forEach((poolData) => {
-            const poolId = poolData.id || poolData.poolpubkey;
+            const poolId = poolData.pool_id ?? poolData.id;
             if (!poolId) return;
             const converted = convertPool(poolData, state);
             if (Object.keys(state.poolindex).indexOf(poolId) === -1) {
@@ -267,6 +260,7 @@ export const store = new Vuex.Store({
               Vue.set(state.pools, state.poolindex[poolId], converted);
             }
           });
+          commit("setActivestakeFromPools");
         }
       });
     },
@@ -276,12 +270,13 @@ export const store = new Vuex.Store({
       state.retiredPoolsSubscribed = true;
     },
 
-    async bindSinglePool({ state }, poolId) {
+    async bindSinglePool({ state, commit }, poolId) {
       if (Object.keys(state.poolindex).indexOf(poolId) !== -1) return;
       try {
         const resp = await getPool(poolId);
-        const poolData = resp.data;
-        if (poolData) {
+        const data = resp.data;
+        const poolData = data && data.pool != null ? data.pool : data;
+        if (poolData && (poolData.pool_id || poolData.id)) {
           const converted = convertPool(poolData, state);
           if (Object.keys(state.poolindex).indexOf(poolId) === -1) {
             const idx = state.pools.push(converted) - 1;
@@ -289,6 +284,7 @@ export const store = new Vuex.Store({
           } else {
             Vue.set(state.pools, state.poolindex[poolId], converted);
           }
+          commit("setActivestakeFromPools");
         }
       } catch (e) {
         console.warn("Failed to load single pool:", poolId, e);
@@ -409,6 +405,14 @@ export const store = new Vuex.Store({
     activestake(state, data) {
       state.activestake = data;
     },
+    setActivestakeFromPools(state) {
+      const map = {};
+      for (let i = 0; i < state.pools.length; i++) {
+        const p = state.pools[i];
+        if (p && p.pool_id != null) map[p.pool_id] = p.live_stake ?? 0;
+      }
+      state.activestake = map;
+    },
     setNetwork(state, data) {
       state.network = data;
       network_raw.set(data);
@@ -507,8 +511,9 @@ export const store = new Vuex.Store({
     getGenesis: (state) => {
       const activeStakeVal =
         state.active_stake != null
-          ? typeof state.active_stake === "object" && state.active_stake[".value"]
-            ? state.active_stake[".value"]
+          ? typeof state.active_stake === "object" &&
+            state.active_stake.total_active_stake != null
+            ? state.active_stake.total_active_stake
             : typeof state.active_stake === "number"
             ? state.active_stake
             : 0
@@ -523,20 +528,17 @@ export const store = new Vuex.Store({
         blockHash:
           state.most_recent_block != null ? state.most_recent_block.hash : "",
         total_staked:
-          state.ecosystem != null ? state.ecosystem.totalStaked || state.ecosystem.total_staked : 0,
+          state.ecosystem != null ? state.ecosystem.total_staked : 0,
         total_staked_addresses:
           state.ecosystem != null ? state.ecosystem.delegators : 0,
-        epochLength:
-          state.ecosystem != null ? state.ecosystem.epochLength || 432000 : 432000,
-        activeSlotCoeff:
-          state.ecosystem != null
-            ? state.ecosystem.activeSlotCoeff || 0.05
-            : 0.05,
+        epoch_reward_pot: state.ecosystem != null ? state.ecosystem.rewardpot : null,
+        epochLength: 432000,
+        activeSlotCoeff: 0.05,
         slot_in_epoch:
           state.most_recent_block != null
             ? (() => {
                 const b = state.most_recent_block;
-                const epochLen = state.ecosystem != null ? (state.ecosystem.epochLength || 432000) : 432000;
+                const epochLen = 432000;
                 let es = b.epoch_slot != null ? b.epoch_slot : b.slot;
                 if (es >= epochLen && b.slot != null) es = b.slot % epochLen;
                 return es;
@@ -555,61 +557,38 @@ export const store = new Vuex.Store({
           state.most_recent_block ? state.most_recent_block.epoch - 1 : 0,
         livedata2: {
           max_livestake:
-            state.ecosystem != null ? state.ecosystem.maxLiveStake || 0 : 0,
+            state.ecosystem != null ? state.ecosystem.maxLiveStake : 0,
           min_livestake: 0,
           total_blockstake: activeStakeVal,
           active_pools:
-            state.ecosystem != null
-              ? state.ecosystem.activePools || state.ecosystem.active_pools || 0
-              : 0,
+            state.ecosystem != null ? state.ecosystem.active_pools : 0,
           total_epoch_blocks:
             state.epoch_data != null ? state.epoch_data.blocks : 0,
         },
         livedata1_old: {
           reserves: state.ecosystem != null ? state.ecosystem.reserves : 0,
-          rho:
-            state.livedata_old != null
-              ? state.livedata_old.monetaryExpandRate ||
-                state.livedata_old.monetary_expand_rate || 0
-              : 0,
-          tau:
-            state.livedata_old != null
-              ? state.livedata_old.treasuryGrowthRate ||
-                state.livedata_old.treasury_growth_rate || 0
-              : 0,
+          rho: state.livedata_old != null ? state.livedata_old.monetary_expansion_rate : 0,
+          tau: state.livedata_old != null ? state.livedata_old.treasury_growth_rate : 0,
         },
         livedata1: {
           decentralisationParam:
-            state.livedata != null
-              ? state.livedata.decentralisation || state.livedata.decentralization || 0
-              : 0,
+            state.livedata != null ? state.livedata.decentralisation : 0,
           reserves: state.ecosystem != null ? state.ecosystem.reserves : 0,
-          rho:
-            state.livedata != null
-              ? state.livedata.monetaryExpandRate ||
-                state.livedata.monetary_expand_rate || 0
-              : 0,
-          tau:
-            state.livedata != null
-              ? state.livedata.treasuryGrowthRate ||
-                state.livedata.treasury_growth_rate || 0
-              : 0,
-          a0:
-            state.livedata != null
-              ? state.livedata.influence || 0
-              : 0,
+          rho: state.livedata != null ? state.livedata.monetary_expansion_rate : 0,
+          tau: state.livedata != null ? state.livedata.treasury_growth_rate : 0,
+          a0: state.livedata != null ? state.livedata.influence : 0,
         },
         senddata: {
           majoritymax:
             state.sync_data != null ? state.sync_data.majoritymax : 0,
-          syncd: state.sync_data != null ? state.sync_data.syncd || {} : {},
-          samples: state.sync_data != null ? state.sync_data.samples || 0 : 0,
+          syncd: state.sync_data != null ? state.sync_data.syncd : 0,
+          samples: state.sync_data != null ? state.sync_data.samples : 0,
           histogramheight:
             state.sync_data != null ? state.sync_data.histogramheight : 0,
           currentepoch:
             state.sync_data != null ? state.sync_data.currentepoch : 0,
           histogramhash:
-            state.sync_data != null ? state.sync_data.histogramhash || "" : "",
+            state.sync_data != null ? state.sync_data.histogramhash : "",
         },
       };
     },

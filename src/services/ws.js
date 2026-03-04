@@ -1,21 +1,18 @@
 /**
  * WebSocket client for real-time data from the PoolTool 2026 backend.
- * Replaces Firebase RTDB listeners with WS channel subscriptions.
- *
- * Usage:
- *   import { wsClient } from "@/services/ws";
- *   wsClient.subscribe("pools", {}, (data) => { ... });
- *   wsClient.unsubscribe("pools");
+ * Implements docs/FRONTEND_API_SPEC.md §3. WS URL hardcoded to 34.209.51.89:3004.
  */
 
-function resolveWsUrl() {
-  if (process.env.VUE_APP_WS_URL) return process.env.VUE_APP_WS_URL;
-  if (typeof window !== "undefined") {
-    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-    return `${proto}//${window.location.hostname}:3004/ws`;
-  }
-  return "ws://localhost:3004/ws";
+const WS_DEBUG = typeof process !== "undefined" && process.env.NODE_ENV === "development";
+
+function isWsDebug() {
+  if (WS_DEBUG) return true;
+  if (typeof window !== "undefined" && window.__POOLTOOL_WS_DEBUG__) return true;
+  return false;
 }
+
+const API_HOST = "34.209.51.89:3004";
+const WS_URL = `ws://${API_HOST}/ws`;
 
 class PoolToolWS {
   constructor() {
@@ -30,7 +27,7 @@ class PoolToolWS {
   connect() {
     if (this._ws && this._ws.readyState <= 1) return;
 
-    const wsUrl = resolveWsUrl();
+    const wsUrl = WS_URL;
     if (typeof console !== "undefined") {
       console.log("[PoolTool WS] Connecting to", wsUrl);
     }
@@ -48,21 +45,40 @@ class PoolToolWS {
       const parse = (text) => {
         try {
           const msg = JSON.parse(text);
+          // §3.3: Server sends type = ping | snapshot | update | error
           if (msg.type === "ping") {
             this._ws.send(JSON.stringify({ action: "pong" }));
             return;
           }
+          if (msg.type === "error") {
+            if (typeof console !== "undefined") console.warn("[PoolTool WS] error", msg.msg || msg);
+            return;
+          }
+          // Only snapshot and update carry channel + data (§3.3)
+          if (msg.type !== "snapshot" && msg.type !== "update") return;
+
           const channel = msg.channel;
-          if (channel && this._listeners[channel]) {
-            let data = msg.data;
-            if (typeof data === "string") {
-              try {
-                data = JSON.parse(data);
-              } catch (_) {
-                // keep as string
-              }
+          let data = msg.data;
+          if (data === undefined) return;
+          if (typeof data === "string") {
+            try {
+              data = JSON.parse(data);
+            } catch (_) {
+              // keep as string
             }
+          }
+          if (isWsDebug() && typeof console !== "undefined") {
+            const hasListener = channel && !!this._listeners[channel];
+            console.log("[PoolTool WS] message", {
+              type: msg.type,
+              channel: channel || "(no channel)",
+              hasListener,
+            });
+          }
+          if (channel && this._listeners[channel]) {
             this._listeners[channel](data);
+          } else if (channel && isWsDebug() && typeof console !== "undefined") {
+            console.warn("[PoolTool WS] no listener for channel:", channel);
           }
         } catch (_) {
           if (typeof console !== "undefined") console.warn("[PoolTool WS] Parse error", _);
@@ -120,12 +136,17 @@ class PoolToolWS {
     if (!this._listenerParams) this._listenerParams = {};
     this._listenerParams[channel] = params || {};
     this._send({ action: "subscribe", channel, params: params || {} });
+    if (isWsDebug() && typeof console !== "undefined") {
+      console.log("[PoolTool WS] subscribe", channel, params || {});
+    }
   }
 
   unsubscribe(channel) {
+    const params = this._listenerParams?.[channel];
     delete this._listeners[channel];
     if (this._listenerParams) delete this._listenerParams[channel];
-    this._send({ action: "unsubscribe", channel });
+    // §3.2: params optional but must match subscribe; send when we had params
+    this._send(params != null ? { action: "unsubscribe", channel, params } : { action: "unsubscribe", channel });
   }
 
   disconnect() {

@@ -5,7 +5,7 @@
         fab
         :small="ismobile"
         :x-large="!ismobile"
-        @click="togglefavorite(pool.poolpubkey)"
+        @click="togglefavorite(pool.pool_id)"
         top
         right
         absolute
@@ -13,9 +13,9 @@
       >
         <v-icon
           :color="
-            pool.poolpubkey != '' &&
+            pool.pool_id != '' &&
             favorites.length &&
-            favorites.indexOf(pool.poolpubkey) != -1
+            favorites.indexOf(pool.pool_id) != -1
               ? 'red'
               : ''
           "
@@ -82,7 +82,7 @@
 
             <div
               class="d-sm-flex text-subtitle-2"
-              v-if="pool.poolpubkey != null"
+              v-if="pool.pool_id != null"
             >
               <div class="text-no-wrap flex-shrink-1">Pool ID:</div>
               <div
@@ -90,10 +90,10 @@
               >
                 <div>
                   <span class="hidden-md-and-up">{{
-                    pool.poolpubkey | ellipsiscrypto(16)
+                    pool.pool_id | ellipsiscrypto(16)
                   }}</span
-                  ><span class="hidden-sm-and-down">{{ pool.poolpubkey }}</span>
-                  <v-btn text x-small icon v-clipboard="pool.poolpubkey">
+                  ><span class="hidden-sm-and-down">{{ pool.pool_id }}</span>
+                  <v-btn text x-small icon v-clipboard="pool.pool_id">
                     <v-icon x-small>mdi-content-copy</v-icon>
                   </v-btn>
                 </div>
@@ -219,7 +219,7 @@
           </v-col>
         </v-row>
         <v-row align="end" justify="space-around" class="mt-0 d-flex">
-          <v-col v-if="!pool.genesis_pool" cols="auto" class="text-center">
+          <v-col v-if="!pool.genesis" cols="auto" class="text-center">
             <span class="text-h6"
               >{{ pool.blockstake | toada | numFormat("0,0.0a") }} ₳</span
             >
@@ -260,7 +260,7 @@
                     (pool.assigned_slots != null) &
                       (pool.assigned_slots != 0) &&
                     pool.assigned_slots ==
-                      (pool.epochBlocksEpoch == currentGenesis.epoch
+                      (pool.epoch_blocks_epoch == currentGenesis.epoch
                         ? pool.epoch_blocks
                         : 0) &&
                     pool.assigned_slots_epoch == currentGenesis.epoch
@@ -278,7 +278,7 @@
                   </v-tooltip>
                 </span>
                 {{
-                  pool.epochBlocksEpoch == currentGenesis.epoch
+                  pool.epoch_blocks_epoch == currentGenesis.epoch
                     ? pool.epoch_blocks
                     : 0
                 }}
@@ -349,7 +349,7 @@
             </div>
           </v-col>
           <v-col
-            v-if="!pool.genesis_pool && poolstats.firstEpoch != 0"
+            v-if="!pool.genesis && poolstats.firstEpoch != 0"
             cols="auto"
             class="text-center"
           >
@@ -363,16 +363,16 @@
             </div>
           </v-col>
 
-          <v-col v-if="!pool.genesis_pool" cols="auto" class="text-center">
+          <v-col v-if="!pool.genesis" cols="auto" class="text-center">
             <span class="text-h6">
-              <span v-if="pool.poolcost != pool.fpoolcost">
+              <span v-if="pool.cost != pool.future_cost">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <v-icon
                       class="ma-0 pa-0"
                       v-on="on"
                       v-bind="attrs"
-                      v-if="pool.poolcost < pool.fpoolcost"
+                      v-if="pool.cost < pool.future_cost"
                       color="red"
                       >mdi-arrow-up-bold</v-icon
                     >
@@ -387,26 +387,26 @@
                   </template>
                   <span
                     >{{ $t("app.pools.epochFeeChangingTo") }}
-                    {{ pool.fpoolcost | toada }}</span
+                    {{ pool.future_cost | toada }}</span
                   >
                 </v-tooltip>
               </span>
 
-              {{ this.pool.poolcost | toada }} ₳</span
+              {{ this.pool.cost | toada }} ₳</span
             >
             <div class="d-block text-no-wrap">{{ $t("global.epochFee") }}</div>
           </v-col>
 
-          <v-col v-if="!pool.genesis_pool" cols="auto" class="text-center">
+          <v-col v-if="!pool.genesis" cols="auto" class="text-center">
             <span class="text-h6">
-              <span v-if="pool.poolmargin != pool.fpoolmargin">
+              <span v-if="pool.margin != pool.future_margin">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <v-icon
                       class="ma-0 pa-0"
                       v-on="on"
                       v-bind="attrs"
-                      v-if="pool.poolmargin < pool.fpoolmargin"
+                      v-if="pool.margin < pool.future_margin"
                       color="red"
                       >mdi-arrow-up-bold</v-icon
                     >
@@ -421,27 +421,27 @@
                   </template>
                   <span
                     >{{ $t("app.pools.variableFeeChangingTo") }}
-                    {{ pool.fpoolmargin | fpercent }}</span
+                    {{ (pool.future_margin / 100) | fpercent }}</span
                   >
                 </v-tooltip>
               </span>
-              {{ this.pool.poolmargin | fpercent }}</span
+              {{ (this.pool.margin / 100) | fpercent }}</span
             >
             <div class="d-block text-no-wrap">
               {{ $t("global.variableFee") }}
             </div>
           </v-col>
-          <v-col v-if="!pool.genesis_pool" cols="auto" class="text-center">
+          <v-col v-if="!pool.genesis" cols="auto" class="text-center">
             <span class="text-h6">
               <span class="text-no-wrap">
-                <span v-if="pool.poolpledge != pool.fpoolpledge">
+                <span v-if="pool.pledge != pool.future_pledge">
                   <v-tooltip bottom>
                     <template v-slot:activator="{ on, attrs }">
                       <v-icon
                         class="ma-0 pa-0"
                         v-on="on"
                         v-bind="attrs"
-                        v-if="pool.fpoolpledge > pool.poolpledge"
+                        v-if="pool.future_pledge > pool.pledge"
                         color="success"
                         >mdi-arrow-up-bold</v-icon
                       >
@@ -456,14 +456,14 @@
                     </template>
                     <span
                       >{{ $t("app.pools.pledgeChangingTo") }}
-                      {{ pool.fpoolpledge | toada | numFormat("0,0.0a") }}</span
+                      {{ (pool.future_pledge != null ? pool.future_pledge : 0) | toada | numFormat("0,0.0a") }}</span
                     >
                     ₳
                   </v-tooltip>
                 </span>
-                {{ pool.poolpledge | toada | numFormat("0,0.0a") }} ₳
+                {{ pool.pledge | toada | numFormat("0,0.0a") }} ₳
                 <v-tooltip
-                  v-if="pool.poolpledgevalue >= pool.poolpledge"
+                  v-if="pool.pool_pledge_value >= pool.pledge"
                   bottom
                 >
                   <template v-slot:activator="{ on, attrs }">
@@ -477,7 +477,7 @@
                   </template>
                   <span
                     >{{ $t("global.declaredPoolPledgeMet") }} ({{
-                      pool.poolpledgevalue | toada | numFormat("0,0.0a")
+                      pool.pool_pledge_value | toada | numFormat("0,0.0a")
                     }}) ₳</span
                   >
                 </v-tooltip>
@@ -500,7 +500,7 @@
             </div>
           </v-col>
 
-          <v-col v-if="!pool.genesis_pool" cols="auto" class="text-center">
+          <v-col v-if="!pool.genesis" cols="auto" class="text-center">
             <span
               v-if="
                 currentGenesis.pool_actuals_calculated_epoch !=
@@ -525,7 +525,7 @@
               {{ $t("global.lifetimeRewards") }}
             </div>
           </v-col>
-          <v-col v-if="!pool.genesis_pool" cols="auto" class="text-center">
+          <v-col v-if="!pool.genesis" cols="auto" class="text-center">
             <span
               v-if="
                 currentGenesis.pool_actuals_calculated_epoch !=
@@ -547,7 +547,7 @@
               {{ $t("app.poolWidget.lifetimeFees") }}
             </div>
           </v-col>
-          <v-col v-if="!pool.genesis_pool" cols="auto" class="text-center">
+          <v-col v-if="!pool.genesis" cols="auto" class="text-center">
             <span
               v-if="
                 currentGenesis.pool_actuals_calculated_epoch !=
@@ -572,19 +572,19 @@
             </div>
           </v-col>
 
-          <v-col v-if="!pool.genesis_pool" cols="auto" class="text-center">
+          <v-col v-if="!pool.genesis" cols="auto" class="text-center">
             <span
               class="text-h6"
-              v-if="this.pool.onlineRelays + this.pool.offlineRelays > 0"
+              v-if="this.pool.online_relays + this.pool.offline_relays > 0"
               >{{
-                (this.pool.onlineRelays /
-                  (this.pool.onlineRelays + this.pool.offlineRelays))
+                (this.pool.online_relays /
+                  (this.pool.online_relays + this.pool.offline_relays))
                   | fpercent
               }}</span
             >
             <span class="text-caption">
-              ({{ this.pool.onlineRelays }}/{{
-                this.pool.onlineRelays + this.pool.offlineRelays
+              ({{ this.pool.online_relays }}/{{
+                this.pool.online_relays + this.pool.offline_relays
               }})</span
             >
             <div class="d-block text-no-wrap">

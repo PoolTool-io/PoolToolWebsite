@@ -585,7 +585,7 @@ export default {
       return [...new Set([...pools, ...this.favorites])];
     },
     favPoolList: function () {
-      return this.pools.filter((a) => this.favorites.includes(a.poolpubkey));
+      return this.pools.filter((a) => this.favorites.includes(a.pool_id));
     },
     pooltableheaders: function () {
       var h = [];
@@ -675,13 +675,13 @@ export default {
       h.push({
         text: this.$t("global.twelveros"),
         align: "center",
-        value: "twelveros",
+        value: "two_month_ros",
         filterable: true,
       });
       h.push({
         text: this.$t("global.sixros"),
         align: "center",
-        value: "sixros",
+        value: "one_month_ros",
         filterable: true,
       });
 
@@ -705,7 +705,7 @@ export default {
       ) {
         return (
           this.pools.filter((a) =>
-            Object.keys(this.userData.myPools).includes(a.poolpubkey)
+            Object.keys(this.userData.myPools).includes(a.pool_id)
           ) || []
         );
       } else {
