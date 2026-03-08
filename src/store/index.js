@@ -444,7 +444,10 @@ export const store = new Vuex.Store({
     },
     setEcosystem(state, data) {
       if (data != null && typeof data === "object") {
-        state.ecosystem = data;
+        if (!state.ecosystem) state.ecosystem = {};
+        Object.keys(data).forEach((key) => {
+          Vue.set(state.ecosystem, key, data[key]);
+        });
       }
     },
     setCurrentEpoch(state, data) {
