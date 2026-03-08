@@ -185,7 +185,7 @@
                 <v-range-slider
                   thumb-color="primary secondary--text"
                   v-model="filterprefs.stakerange"
-                  :max="(genesis.livedata2.max_livestake + 10e12) / 1e12"
+                  :max="Math.max(500, ((genesis.livedata2.max_livestake || 0) + 10e12) / 1e12)"
                   min="0"
                   hide-details
                   thumb-label="always"

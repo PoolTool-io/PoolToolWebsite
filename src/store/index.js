@@ -619,7 +619,7 @@ export const store = new Vuex.Store({
           state.most_recent_block ? state.most_recent_block.epoch - 1 : 0,
         livedata2: {
           max_livestake:
-            state.ecosystem != null ? state.ecosystem.maxLiveStake : 0,
+            state.ecosystem != null ? (state.ecosystem.maxLiveStake || 0) : 0,
           min_livestake: 0,
           total_blockstake: activeStakeVal,
           active_pools:
