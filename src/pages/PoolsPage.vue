@@ -354,6 +354,8 @@ export default {
     return {
       tableupdating: false,
       columnsetdialog: false,
+      debouncedSearch: "",
+      searchTimer: null,
       searchtype: "all",
       searchtickers: true,
       searchnames: true,
@@ -443,6 +445,9 @@ export default {
     };
   },
   computed: {
+    favoriteSet: function () {
+      return new Set(this.favorites);
+    },
     poolsRetired: function () {
       return this.appliedfilters.poolsRetired;
     },
@@ -533,7 +538,7 @@ export default {
           }
         }
         if (this.appliedfilters.poolsFavorite) {
-          if (this.favorites.indexOf(item["pool_id"]) == -1) {
+          if (!this.favoriteSet.has(item["pool_id"])) {
             return false;
           }
         }
@@ -563,8 +568,8 @@ export default {
             return false;
           }
         }
-        if (this.search != null && this.search != "") {
-          var search = this.search.toLocaleUpperCase();
+        if (this.debouncedSearch != null && this.debouncedSearch != "") {
+          var search = this.debouncedSearch.toLocaleUpperCase();
           if (this.searchtype == "all") {
             if (
               (typeof item["pool_name"] === "string" &&
@@ -1008,13 +1013,19 @@ export default {
       console.log("watching poolsRetired", oldval, newval);
       this.$store.dispatch("bindPoolsRetired");
     },
-    search: function () {
-      this.poolsPage = 1;
+    search: function (val) {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = setTimeout(() => {
+        this.debouncedSearch = val;
+        this.poolsPage = 1;
+      }, 250);
     },
   },
   mounted() {
     this.poolsLoaded = true;
     this.$emit("isLoaded", true);
+    // Sync debouncedSearch with any persisted search value from vue-preferences
+    this.debouncedSearch = this.search || "";
   },
   created() {
     this.$store.dispatch("bindPools");

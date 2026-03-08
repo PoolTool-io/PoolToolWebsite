@@ -248,58 +248,51 @@ export const store = new Vuex.Store({
       if (state.poolsSubscribed) return;
       state.poolsSubscribed = true;
 
-      // Helper: merge an array of raw pool objects into state
-      function applyPools(poolsArr) {
-        poolsArr.forEach((poolData) => {
+      // Convert raw API array → { pools[], poolindex{} } in one pass (no Vue reactivity)
+      function buildBulk(rawArr) {
+        const pools = [];
+        const poolindex = {};
+        rawArr.forEach((poolData) => {
           const poolId = poolData.pool_id ?? poolData.id;
           if (!poolId) return;
-          const converted = convertPool(poolData, state);
-          if (Object.keys(state.poolindex).indexOf(poolId) === -1) {
-            const idx = state.pools.push(converted) - 1;
-            Vue.set(state.poolindex, poolId, idx);
-          } else {
-            Vue.set(state.pools, state.poolindex[poolId], converted);
-          }
+          poolindex[poolId] = pools.length;
+          pools.push(convertPool(poolData, state));
         });
-        commit("setActivestakeFromPools");
+        return { pools, poolindex };
       }
 
       // ── 1. Render immediately from local cache (zero network wait) ──────────
       const cached = loadPoolsCache();
       if (cached && cached.length) {
-        applyPools(cached);
+        commit("setPoolsBulk", buildBulk(cached));
       }
 
-      // ── 2. Background refresh — fetch fresh data, patch changes, update cache
+      // ── 2. Background refresh — fetch fresh data, replace in one update ──────
       try {
         const resp = await getPools();
-        const poolsArr = resp.data;
-        applyPools(poolsArr);
-        savePoolsCache(poolsArr);
+        const rawArr = resp.data;
+        commit("setPoolsBulk", buildBulk(rawArr));
+        savePoolsCache(rawArr);
       } catch (e) {
         console.warn("Failed to load pools:", e);
       }
 
-      // ── 3. Real-time WS updates — patch individual pools + keep cache current
+      // ── 3. Real-time WS updates — full snapshot → bulk replace + update cache
       wsClient.subscribe("pools", {}, (data) => {
-        if (Array.isArray(data)) {
-          applyPools(data);
+        if (!Array.isArray(data)) return;
 
-          // Merge WS payload into cache so next page load is up to date
-          const existing = loadPoolsCache();
-          if (existing) {
-            const patchMap = new Map(data.map((p) => [p.pool_id ?? p.id, p]));
-            const merged = existing.map((p) =>
-              patchMap.get(p.pool_id ?? p.id) || p
-            );
-            data.forEach((p) => {
-              const id = p.pool_id ?? p.id;
-              if (!existing.find((e) => (e.pool_id ?? e.id) === id)) {
-                merged.push(p);
-              }
-            });
-            savePoolsCache(merged);
-          }
+        commit("setPoolsBulk", buildBulk(data));
+
+        // Merge WS payload into cache so next page load is up to date
+        const existing = loadPoolsCache();
+        if (existing) {
+          const patchMap = new Map(data.map((p) => [p.pool_id ?? p.id, p]));
+          const merged = existing.map((p) => patchMap.get(p.pool_id ?? p.id) || p);
+          data.forEach((p) => {
+            const id = p.pool_id ?? p.id;
+            if (!existing.find((e) => (e.pool_id ?? e.id) === id)) merged.push(p);
+          });
+          savePoolsCache(merged);
         }
       });
     },
@@ -455,6 +448,18 @@ export const store = new Vuex.Store({
       const map = {};
       for (let i = 0; i < state.pools.length; i++) {
         const p = state.pools[i];
+        if (p && p.pool_id != null) map[p.pool_id] = p.live_stake ?? 0;
+      }
+      state.activestake = map;
+    },
+    // Bulk-replace the entire pools list in one reactive update instead of
+    // 2800 individual Vue.set calls — avoids thrashing computed properties
+    setPoolsBulk(state, { pools, poolindex }) {
+      state.pools = pools;
+      state.poolindex = poolindex;
+      const map = {};
+      for (let i = 0; i < pools.length; i++) {
+        const p = pools[i];
         if (p && p.pool_id != null) map[p.pool_id] = p.live_stake ?? 0;
       }
       state.activestake = map;
