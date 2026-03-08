@@ -396,6 +396,13 @@ export const store = new Vuex.Store({
       wsClient.subscribe("syncdata", {}, (data) => {
         commit("mergeSyncDataLive", data);
       });
+
+      // Subscribe to live heights updates (synced pool map from tipsApiApp)
+      wsClient.subscribe("heights", {}, (data) => {
+        if (data != null && typeof data === "object") {
+          state.heights = data;
+        }
+      });
     },
 
     updatePools({ commit }, poolsdata) {
