@@ -19,6 +19,27 @@ Vue.use(Vuex);
 
 const network_raw = preference("network", { defaultValue: "Mainnet" });
 
+// ── Pool data local cache (stale-while-revalidate) ──────────────────────────
+const POOLS_CACHE_KEY = "pt_pools_v1";
+
+function savePoolsCache(rawPools) {
+  try {
+    localStorage.setItem(POOLS_CACHE_KEY, JSON.stringify(rawPools));
+  } catch (e) {
+    // localStorage quota exceeded or unavailable — non-critical
+  }
+}
+
+function loadPoolsCache() {
+  try {
+    const raw = localStorage.getItem(POOLS_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 function convertPool(a, state) {
   // Spec §4: descriptive keys only (no compressed keys).
   const b = {
@@ -227,9 +248,8 @@ export const store = new Vuex.Store({
       if (state.poolsSubscribed) return;
       state.poolsSubscribed = true;
 
-      try {
-        const resp = await getPools();
-        const poolsArr = resp.data;
+      // Helper: merge an array of raw pool objects into state
+      function applyPools(poolsArr) {
         poolsArr.forEach((poolData) => {
           const poolId = poolData.pool_id ?? poolData.id;
           if (!poolId) return;
@@ -242,25 +262,44 @@ export const store = new Vuex.Store({
           }
         });
         commit("setActivestakeFromPools");
+      }
+
+      // ── 1. Render immediately from local cache (zero network wait) ──────────
+      const cached = loadPoolsCache();
+      if (cached && cached.length) {
+        applyPools(cached);
+      }
+
+      // ── 2. Background refresh — fetch fresh data, patch changes, update cache
+      try {
+        const resp = await getPools();
+        const poolsArr = resp.data;
+        applyPools(poolsArr);
+        savePoolsCache(poolsArr);
       } catch (e) {
         console.warn("Failed to load pools:", e);
       }
 
-      // Real-time pool updates via WS
+      // ── 3. Real-time WS updates — patch individual pools + keep cache current
       wsClient.subscribe("pools", {}, (data) => {
         if (Array.isArray(data)) {
-          data.forEach((poolData) => {
-            const poolId = poolData.pool_id ?? poolData.id;
-            if (!poolId) return;
-            const converted = convertPool(poolData, state);
-            if (Object.keys(state.poolindex).indexOf(poolId) === -1) {
-              const idx = state.pools.push(converted) - 1;
-              Vue.set(state.poolindex, poolId, idx);
-            } else {
-              Vue.set(state.pools, state.poolindex[poolId], converted);
-            }
-          });
-          commit("setActivestakeFromPools");
+          applyPools(data);
+
+          // Merge WS payload into cache so next page load is up to date
+          const existing = loadPoolsCache();
+          if (existing) {
+            const patchMap = new Map(data.map((p) => [p.pool_id ?? p.id, p]));
+            const merged = existing.map((p) =>
+              patchMap.get(p.pool_id ?? p.id) || p
+            );
+            data.forEach((p) => {
+              const id = p.pool_id ?? p.id;
+              if (!existing.find((e) => (e.pool_id ?? e.id) === id)) {
+                merged.push(p);
+              }
+            });
+            savePoolsCache(merged);
+          }
         }
       });
     },
