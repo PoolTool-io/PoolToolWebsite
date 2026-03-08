@@ -1422,9 +1422,17 @@ export default {
       var stakevals = [];
       var datalabels = [];
       let dataarray = [];
-      for (let [key, value] of Object.entries(
-        JSON.parse(this.ecosystem.protocolsRelays)
-      )) {
+      const protocolsRelaysRaw = this.ecosystem && this.ecosystem.protocolsRelays;
+      if (!protocolsRelaysRaw) {
+        return { mytitle: "", labels: datalabels, datasets: [{ data: stakevals, backgroundColor: this.backgroundColors, borderColor: this.borderColors }] };
+      }
+      let protocolsRelaysParsed;
+      try {
+        protocolsRelaysParsed = typeof protocolsRelaysRaw === "string" ? JSON.parse(protocolsRelaysRaw) : protocolsRelaysRaw;
+      } catch (e) {
+        return { mytitle: "", labels: datalabels, datasets: [{ data: stakevals, backgroundColor: this.backgroundColors, borderColor: this.borderColors }] };
+      }
+      for (let [key, value] of Object.entries(protocolsRelaysParsed)) {
         if (typeof this.relayProtocolMapping[key] !== "undefined") {
           value["key"] = this.relayProtocolMapping[key];
         } else {
