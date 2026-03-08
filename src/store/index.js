@@ -357,6 +357,11 @@ export const store = new Vuex.Store({
       wsClient.subscribe("ecosystem", {}, (data) => {
         commit("setEcosystem", data);
       });
+
+      // Subscribe to live syncdata updates (majoritymax / syncd / samples from tipsApiApp)
+      wsClient.subscribe("syncdata", {}, (data) => {
+        commit("mergeSyncDataLive", data);
+      });
     },
 
     updatePools({ commit }, poolsdata) {
@@ -425,6 +430,12 @@ export const store = new Vuex.Store({
       if (data.currentepoch != null) state.sync_data.currentepoch = data.currentepoch;
       if (data.currentslot != null) state.sync_data.currentslot = data.currentslot;
       if (data.histogramheight != null) state.sync_data.histogramheight = data.histogramheight;
+    },
+    mergeSyncDataLive(state, data) {
+      if (!state.sync_data) state.sync_data = {};
+      if (data.majoritymax != null) Vue.set(state.sync_data, "majoritymax", data.majoritymax);
+      if (data.syncd != null) Vue.set(state.sync_data, "syncd", data.syncd);
+      if (data.samples != null) Vue.set(state.sync_data, "samples", data.samples);
     },
     setEpochData(state, data) {
       state.epoch_data = data;
