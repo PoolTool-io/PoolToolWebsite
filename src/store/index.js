@@ -355,7 +355,9 @@ export const store = new Vuex.Store({
 
       // Subscribe to real-time ecosystem updates
       wsClient.subscribe("ecosystem", {}, (data) => {
-        commit("setEcosystem", data);
+        if (data != null && typeof data === "object") {
+          commit("setEcosystem", data);
+        }
       });
 
       // Subscribe to live syncdata updates (majoritymax / syncd / samples from tipsApiApp)
@@ -441,7 +443,9 @@ export const store = new Vuex.Store({
       state.epoch_data = data;
     },
     setEcosystem(state, data) {
-      state.ecosystem = data;
+      if (data != null && typeof data === "object") {
+        state.ecosystem = data;
+      }
     },
     setCurrentEpoch(state, data) {
       state.current_epoch = data;
