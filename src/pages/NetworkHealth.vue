@@ -899,6 +899,9 @@ export default {
       var stakevals = [];
       var datalabels = [];
       let dataarray = [];
+      if (!this.ecosystem || !this.ecosystem.protocolVersions) {
+        return [datalabels, stakevals];
+      }
       for (let [key, value] of Object.entries(
         this.ecosystem.protocolVersions
       )) {
