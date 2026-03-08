@@ -510,9 +510,15 @@ export default {
       let otherqty = 0;
       let otherstake = 0;
       let i = 0;
-      for (let [key, value] of Object.entries(
-        JSON.parse(this.ecosystem.datacentersRelays)
-      )) {
+      const raw = this.ecosystem && this.ecosystem.datacentersRelays;
+      if (!raw) return { labels: [], datasets: [] };
+      let parsed;
+      try {
+        parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      } catch (e) {
+        return { labels: [], datasets: [] };
+      }
+      for (let [key, value] of Object.entries(parsed)) {
         value["key"] = key;
 
         dataarray.push(value);
