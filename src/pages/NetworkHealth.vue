@@ -860,19 +860,26 @@ export default {
       // call it upon creation too
       immediate: true,
       handler() {
-        console.log("refetch tickers");
         var self = this;
-        //reload the tickers file
-        this.getJSON(
-          "https://s3-us-west-2.amazonaws.com/data.pooltool.io/stats/tickers2.json?t=" +
-            Date.now(),
-          function (err, thisdata) {
-            if (err == null) {
-              self.tickers = thisdata.tickers;
-              self.tickerHash = thisdata.hash;
-            }
+        const s3Url =
+          "https://s3-us-west-2.amazonaws.com/data.pooltool.io/stats/tickers2026.json?t=" +
+          Date.now();
+        const apiUrl =
+          "http://34.209.51.89:3004/api/tickers2026?t=" + Date.now();
+        this.getJSON(s3Url, function (err, thisdata) {
+          if (err == null && thisdata && thisdata.tickers) {
+            self.tickers = thisdata.tickers;
+            self.tickerHash = thisdata.hash;
+          } else {
+            // S3 not yet available — fall back to backend API
+            self.getJSON(apiUrl, function (err2, data2) {
+              if (err2 == null && data2 && data2.tickers) {
+                self.tickers = data2.tickers;
+                self.tickerHash = data2.hash;
+              }
+            });
           }
-        );
+        });
       },
     },
     genesis: {

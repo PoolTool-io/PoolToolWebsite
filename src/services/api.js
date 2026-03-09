@@ -122,6 +122,10 @@ export function getHeights() {
   return api.get("/api/heights");
 }
 
+export function getTickers2026() {
+  return api.get("/api/tickers2026");
+}
+
 // ── Translations / i18n (§2.7) ─────────────────────────
 
 export function getTranslations() {
