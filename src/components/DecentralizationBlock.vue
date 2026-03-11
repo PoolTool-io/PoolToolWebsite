@@ -594,7 +594,7 @@ export default {
     fetchTrendingBattleData() {
       var self = this;
       this.getJSON(
-        "https://s3-us-west-2.amazonaws.com/data.pooltool.io/stats/trendingbattles.json?t=" +
+        "https://s3-us-west-2.amazonaws.com/data.pooltool.io/stats/trendingbattles2026.json?t=" +
           Date.now(),
         function (err, thisdata) {
           let battledata_battles = [];
@@ -685,7 +685,7 @@ export default {
       var self = this;
       if (!this.isInactive) {
         this.getJSON(
-          "https://s3-us-west-2.amazonaws.com/data.pooltool.io/stats/battledata.json?t=" +
+          "https://s3-us-west-2.amazonaws.com/data.pooltool.io/stats/battledata2026.json?t=" +
             Date.now(),
           function (err, thisdata) {
             let battledata_battles = [];
