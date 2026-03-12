@@ -829,7 +829,7 @@ export default {
     },
     buildEpochData: function (rawEntry, thisepoch) {
       var value = {
-        epoch: thisepoch,
+        epoch: Number(thisepoch),
         amount: rawEntry.amount,
         delegatedTo:
           rawEntry.delegatedTo != null ? rawEntry.delegatedTo : "None",
