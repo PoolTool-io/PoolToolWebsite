@@ -85,6 +85,13 @@ function convertPool(a, state) {
     lifetime_ros: a.lifetime_ros ?? 0,
     one_month_ros: a.one_month_ros ?? 0,
     two_month_ros: a.two_month_ros ?? 0,
+    epoch_ros: a.epoch_ros ?? 0,
+    epoch_ros_epoch: a.epoch_ros_epoch ?? null,
+    epoch_rewards: a.epoch_rewards ?? 0,
+    epoch_tax: a.epoch_tax ?? 0,
+    lifetime_rewards: a.lifetime_rewards ?? 0,
+    lifetime_tax: a.lifetime_tax ?? 0,
+    lifetime_stake: a.lifetime_stake ?? 0,
   };
   if (
     b.lifetime_per_blocks > 0 &&
@@ -206,10 +213,7 @@ export const store = new Vuex.Store({
     rewardsnp1: {},
     rewardstake: {},
     activestake: {},
-    mary_db_sync_status_pool_forecast_calculated_epoch: null,
-    mary_db_sync_status_pool_actuals_calculated_epoch: null,
-    mary_db_sync_status_forecast_rewards_complete_epoch: null,
-    mary_db_sync_status_actual_rewards_complete_epoch: null,
+    // Legacy Firebase sync flags (no longer written to; kept for backward compat)
     mary_db_sync_status_new_rewards_complete_epoch: 0,
     heights: {},
     admin_message: { chillin: false, message: "", title: "" },
@@ -652,10 +656,7 @@ export const store = new Vuex.Store({
     getPoolIndex: (state) => state.poolindex,
     getIsInactive: (state) => state.isInactive,
     getNewRewardsCompleteEpoch: (state) =>
-      state.mary_db_sync_status_new_rewards_complete_epoch != null &&
-      state.mary_db_sync_status_new_rewards_complete_epoch[".value"]
-        ? state.mary_db_sync_status_new_rewards_complete_epoch[".value"]
-        : state.most_recent_block ? state.most_recent_block.epoch : 0,
+      state.most_recent_block ? state.most_recent_block.epoch - 2 : 0,
     getGenesis: (state) => {
       const activeStakeVal =
         state.active_stake != null
@@ -694,15 +695,15 @@ export const store = new Vuex.Store({
             : 0,
         prices: state.ecosystem != null ? state.ecosystem.prices || {} : {},
         forecast_rewards_complete_epoch:
-          state.most_recent_block ? state.most_recent_block.epoch : 0,
+          state.most_recent_block ? state.most_recent_block.epoch - 1 : 0,
         actual_rewards_complete_epoch:
-          state.most_recent_block ? state.most_recent_block.epoch - 1 : 0,
+          state.most_recent_block ? state.most_recent_block.epoch - 2 : 0,
         new_rewards_complete_epoch:
-          state.most_recent_block ? state.most_recent_block.epoch : 0,
+          state.most_recent_block ? state.most_recent_block.epoch - 2 : 0,
         pool_forecast_calculated_epoch:
-          state.most_recent_block ? state.most_recent_block.epoch : 0,
-        pool_actuals_calculated_epoch:
           state.most_recent_block ? state.most_recent_block.epoch - 1 : 0,
+        pool_actuals_calculated_epoch:
+          state.most_recent_block ? state.most_recent_block.epoch - 2 : 0,
         livedata2: {
           max_livestake:
             state.ecosystem != null ? (state.ecosystem.maxLiveStake || 0) : 0,

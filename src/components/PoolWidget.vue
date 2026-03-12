@@ -328,21 +328,8 @@
           </v-col>
 
           <v-col cols="auto" class="text-center">
-            <span
-              v-if="
-                currentGenesis.pool_actuals_calculated_epoch !=
-                currentGenesis.epoch - 2
-              "
-            >
-              <v-progress-circular
-                color="grey"
-                :size="25"
-                :width="5"
-                indeterminate
-              ></v-progress-circular>
-            </span>
-            <span v-else class="text-h6">{{
-              this.pool.lifetimeroi | fpercent
+            <span class="text-h6">{{
+              this.pool.lifetime_ros | fpercent
             }}</span>
             <div class="d-block text-no-wrap">
               {{ $t("global.lifetimeROS") }}
@@ -501,23 +488,9 @@
           </v-col>
 
           <v-col v-if="!pool.genesis" cols="auto" class="text-center">
-            <span
-              v-if="
-                currentGenesis.pool_actuals_calculated_epoch !=
-                currentGenesis.epoch - 2
-              "
-            >
-              <v-progress-circular
-                color="grey"
-                :size="25"
-                :width="5"
-                indeterminate
-              ></v-progress-circular>
-            </span>
-
-            <span v-else class="text-h6"
+            <span class="text-h6"
               >{{
-                this.pool.lifetimeRewards | toada | numFormat("0,0.0a")
+                this.pool.lifetime_rewards | toada | numFormat("0,0.0a")
               }}
               ₳</span
             >
@@ -526,44 +499,17 @@
             </div>
           </v-col>
           <v-col v-if="!pool.genesis" cols="auto" class="text-center">
-            <span
-              v-if="
-                currentGenesis.pool_actuals_calculated_epoch !=
-                currentGenesis.epoch - 2
-              "
-            >
-              <v-progress-circular
-                color="grey"
-                :size="25"
-                :width="5"
-                indeterminate
-              ></v-progress-circular>
-            </span>
-
-            <span v-else class="text-h6"
-              >{{ this.pool.lifetimeTax | toada | numFormat("0,0.0a") }} ₳</span
+            <span class="text-h6"
+              >{{ this.pool.lifetime_tax | toada | numFormat("0,0.0a") }} ₳</span
             >
             <div class="d-block text-no-wrap">
               {{ $t("app.poolWidget.lifetimeFees") }}
             </div>
           </v-col>
           <v-col v-if="!pool.genesis" cols="auto" class="text-center">
-            <span
-              v-if="
-                currentGenesis.pool_actuals_calculated_epoch !=
-                currentGenesis.epoch - 2
-              "
-            >
-              <v-progress-circular
-                color="grey"
-                :size="25"
-                :width="5"
-                indeterminate
-              ></v-progress-circular>
-            </span>
-            <span v-else class="text-h6"
+            <span class="text-h6"
               >{{
-                this.pool.lifetimeStake | toada | numFormat("0,0.0a")
+                this.pool.lifetime_stake | toada | numFormat("0,0.0a")
               }}
               ₳</span
             >

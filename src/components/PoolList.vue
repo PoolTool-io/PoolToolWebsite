@@ -59,104 +59,28 @@
       </v-chip>
     </template>
     <template #[`item.roi`]="{ item }">
-      <span v-if="genesis.pool_actuals_calculated_epoch != genesis.epoch - 2">
-        <v-progress-circular
-          color="grey"
-          :size="12"
-          :width="2"
-          indeterminate
-        ></v-progress-circular>
-      </span>
-      <span v-else>{{
-        item.pool_id in rewards
-          ? rewards[item.pool_id]["epochRos"]
-          : 0 | fpercent
-      }}</span>
+      <span>{{ item.epoch_ros | fpercent }}</span>
     </template>
     <template #[`item.roifcp1`]="{ item }">
-      <span v-if="genesis.pool_forecast_calculated_epoch != genesis.epoch - 1">
-        <v-progress-circular
-          color="grey"
-          :size="12"
-          :width="2"
-          indeterminate
-        ></v-progress-circular>
-      </span>
-      <span v-else>{{
-        item.pool_id in rewardsnp1
-          ? rewardsnp1[item.pool_id]["epochRos"]
-          : 0 | fpercent
-      }}</span>
+      <span>{{ item.epoch_ros | fpercent }}</span>
     </template>
     <template #[`item.grouproi`]="{ item }">
-      <span v-if="genesis.pool_actuals_calculated_epoch != genesis.epoch - 2">
-        <v-progress-circular
-          color="grey"
-          :size="12"
-          :width="2"
-          indeterminate
-        ></v-progress-circular>
-      </span>
-      <span v-else>{{
+      <span>{{
         item.grouprewardstake | grouproi(item.group_epoch_rewards) | fpercent
       }}</span>
     </template>
 
     <template #[`item.epoch_rewards`]="{ item }">
-      <span v-if="genesis.pool_actuals_calculated_epoch != genesis.epoch - 2">
-        <v-progress-circular
-          color="grey"
-          :size="12"
-          :width="2"
-          indeterminate
-        ></v-progress-circular>
-      </span>
-      <span v-else>{{
-        item.pool_id in rewards
-          ? rewards[item.pool_id]["epochRewards"]
-          : 0 | toada | numFormat("0,0.0a")
-      }}</span>
+      <span>{{ item.epoch_rewards | toada | numFormat("0,0.0a") }}</span>
     </template>
     <template #[`item.group_epoch_rewards`]="{ item }">
-      <span v-if="genesis.pool_actuals_calculated_epoch != genesis.epoch - 2">
-        <v-progress-circular
-          color="grey"
-          :size="12"
-          :width="2"
-          indeterminate
-        ></v-progress-circular>
-      </span>
-      <span v-else>{{
-        item.group_epoch_rewards | toada | numFormat("0,0.0a")
-      }}</span>
+      <span>{{ item.group_epoch_rewards | toada | numFormat("0,0.0a") }}</span>
     </template>
     <template #[`item.epoch_tax`]="{ item }">
-      <span v-if="genesis.pool_actuals_calculated_epoch != genesis.epoch - 2">
-        <v-progress-circular
-          color="grey"
-          :size="12"
-          :width="2"
-          indeterminate
-        ></v-progress-circular>
-      </span>
-      <span v-else>{{
-        item.pool_id in rewards
-          ? rewards[item.pool_id]["epochTax"]
-          : 0 | toada | numFormat("0,0.0a")
-      }}</span>
+      <span>{{ item.epoch_tax | toada | numFormat("0,0.0a") }}</span>
     </template>
     <template #[`item.group_epoch_tax`]="{ item }">
-      <span v-if="genesis.pool_actuals_calculated_epoch != genesis.epoch - 2">
-        <v-progress-circular
-          color="grey"
-          :size="12"
-          :width="2"
-          indeterminate
-        ></v-progress-circular>
-      </span>
-      <span v-else>{{
-        item.group_epoch_tax | toada | numFormat("0,0.0a")
-      }}</span>
+      <span>{{ item.group_epoch_tax | toada | numFormat("0,0.0a") }}</span>
     </template>
 
     <template #[`item.rewardstake`]="{ item }">
@@ -485,43 +409,15 @@
     </template>
 
     <template #[`item.lifetimeroi`]="{ item }">
-      <span v-if="genesis.pool_actuals_calculated_epoch != genesis.epoch - 2">
-        <v-progress-circular
-          color="grey"
-          :size="12"
-          :width="2"
-          indeterminate
-        ></v-progress-circular>
-      </span>
-      <span v-else>{{
-        item.pool_id in rewards
-          ? rewards[item.pool_id]["lifetimeRos"]
-          : 0 | fpercent
-      }}</span>
+      <span>{{ item.lifetime_ros | fpercent }}</span>
     </template>
 
     <template #[`item.one_month_ros`]="{ item }">
-      <span v-if="genesis.pool_actuals_calculated_epoch != genesis.epoch - 2">
-        <v-progress-circular
-          color="grey"
-          :size="12"
-          :width="2"
-          indeterminate
-        ></v-progress-circular>
-      </span>
-      <span v-else>{{ item.one_month_ros | fpercent }}</span>
+      <span>{{ item.one_month_ros | fpercent }}</span>
     </template>
 
     <template #[`item.two_month_ros`]="{ item }">
-      <span v-if="genesis.pool_actuals_calculated_epoch != genesis.epoch - 2">
-        <v-progress-circular
-          color="grey"
-          :size="12"
-          :width="2"
-          indeterminate
-        ></v-progress-circular>
-      </span>
-      <span v-else>{{ item.two_month_ros | fpercent }}</span>
+      <span>{{ item.two_month_ros | fpercent }}</span>
     </template>
 
     <template #[`item.lifetime_performance`]="{ item }">

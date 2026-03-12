@@ -170,45 +170,16 @@ export default {
             ? this.activestake
             : (selected_pool.live_stake != null ? selected_pool.live_stake : 0);
 
-        selected_pool["roi"] =
-          this.rewards["epochRos"] != null ? this.rewards["epochRos"] : 0;
-
-        selected_pool["epoch_tax"] =
-          this.rewards["epochTax"] != null ? this.rewards["epochTax"] : 0;
-
-        selected_pool["epoch_rewards"] =
-          this.rewards["epochRewards"] != null
-            ? this.rewards["epochRewards"]
-            : 0;
-
-        selected_pool["lifetimeroi"] =
-          this.rewards["lifetimeRos"] != null ? this.rewards["lifetimeRos"] : 0;
-
-        selected_pool["lifetimeStake"] =
-          this.rewards["lifetimeStake"] != null
-            ? this.rewards["lifetimeStake"]
-            : 0;
-
-        selected_pool["lifetimeTax"] =
-          this.rewards["lifetimeTax"] != null ? this.rewards["lifetimeTax"] : 0;
-
-        selected_pool["lifetimeRewards"] =
-          this.rewards["lifetimeRewards"] != null
-            ? this.rewards["lifetimeRewards"]
-            : 0;
-
-        selected_pool["roifcp1"] =
-          this.rewardsnp1["epochRos"] != null ? this.rewardsnp1["epochRos"] : 0;
-
-        selected_pool["fcp1EpochTax"] =
-          this.rewardsnp1["fcp1EpochTax"] != null
-            ? this.rewardsnp1["fcp1EpochTax"]
-            : 0;
-
-        selected_pool["fcp1EpochRewards"] =
-          this.rewardsnp1["fcp1EpochRewards"] != null
-            ? this.rewardsnp1["fcp1EpochRewards"]
-            : 0;
+        selected_pool["roi"] = selected_pool.epoch_ros ?? 0;
+        selected_pool["epoch_tax"] = selected_pool.epoch_tax ?? 0;
+        selected_pool["epoch_rewards"] = selected_pool.epoch_rewards ?? 0;
+        selected_pool["lifetimeroi"] = selected_pool.lifetime_ros ?? 0;
+        selected_pool["lifetimeStake"] = selected_pool.lifetime_stake ?? 0;
+        selected_pool["lifetimeTax"] = selected_pool.lifetime_tax ?? 0;
+        selected_pool["lifetimeRewards"] = selected_pool.lifetime_rewards ?? 0;
+        selected_pool["roifcp1"] = selected_pool.epoch_ros ?? 0;
+        selected_pool["fcp1EpochTax"] = 0;
+        selected_pool["fcp1EpochRewards"] = 0;
 
         return selected_pool;
       }

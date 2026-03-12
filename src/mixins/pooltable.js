@@ -164,8 +164,8 @@ export default {
                         /* eslint-disable no-unreachable */
                         break
                     case "lifetimeroi":
-                        a.lifetimeroi=a.pool_id in this.rewards&&'lifetimeRos' in this.rewards[a.pool_id]?this.rewards[a.pool_id]['lifetimeRos']:0
-                        b.lifetimeroi=b.pool_id in this.rewards&&'lifetimeRos' in this.rewards[b.pool_id]?this.rewards[b.pool_id]['lifetimeRos']:0
+                        a.lifetimeroi = a.lifetime_ros || 0
+                        b.lifetimeroi = b.lifetime_ros || 0
                         if (!isDesc[0]) {
                             return a.lifetimeroi < b.lifetimeroi ? -1 : 1;
                         } else {
@@ -175,9 +175,9 @@ export default {
                         /* eslint-disable no-unreachable */
                         break
                     case 'roi':
-                        b['roi']=b['pool_id'] in this.rewards?this.rewards[b['pool_id']]['epochRos']:0
-                        a['roi']=a['pool_id'] in this.rewards?this.rewards[a['pool_id']]['epochRos']:0
-                        if (!isDesc[0]) { //low on top to high
+                        b['roi'] = b.epoch_ros || 0
+                        a['roi'] = a.epoch_ros || 0
+                        if (!isDesc[0]) {
                             if (b['roi'] == 0 || b['roi'] == null) return 1
                             if (a['roi'] == 0 || a['roi'] == null) return -1
                             return a['roi'] < b['roi'] ? -1 : 1;
@@ -189,9 +189,9 @@ export default {
                         /* eslint-disable no-unreachable */
                         break
                     case 'roifcp1':
-                        b['roifcp1']=b['pool_id'] in this.rewardsnp1?this.rewardsnp1[b['pool_id']]['epochRos']:0
-                        a['roifcp1']=a['pool_id'] in this.rewardsnp1?this.rewardsnp1[a['pool_id']]['epochRos']:0
-                        if (!isDesc[0]) { //low on top to high
+                        b['roifcp1'] = b.epoch_ros || 0
+                        a['roifcp1'] = a.epoch_ros || 0
+                        if (!isDesc[0]) {
                             if (b['roifcp1'] == 0 || b['roifcp1'] == null) return 1
                             if (a['roifcp1'] == 0 || a['roifcp1'] == null) return -1
                             return a['roifcp1'] < b['roifcp1'] ? -1 : 1;
