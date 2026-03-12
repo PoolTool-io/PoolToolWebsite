@@ -105,6 +105,13 @@ export default {
         delegatorCount: "",
         public_note: "",
         pooltoolbot_subscribers: 0,
+        reward_account: null,
+        reward_address: null,
+        pool_owners: null,
+        owners: null,
+        relay_details: null,
+        extended_json: null,
+        live_stake: 0,
       },
     };
   },
@@ -133,7 +140,7 @@ export default {
           try {
             const { data } = await getPool(this.$route.params.poolid);
             if (data && data.pool_stats) {
-              Object.assign(this.poolstats, data.pool_stats);
+              this.poolstats = { ...this.poolstats, ...data.pool_stats };
             }
           } catch (e) {
             console.error("Failed to fetch pool stats", e);
