@@ -31,12 +31,15 @@ export default {
   },
   computed: {
     propdata: function () {
+      if (!this.histogram || !Array.isArray(this.histogram)) {
+        return { labels: [], datasets: [] };
+      }
       return {
-        labels: this.histogram[1],
+        labels: this.histogram[1] || [],
         datasets: [
           {
             gradientColor: "green",
-            data: this.histogram[0],
+            data: this.histogram[0] || [],
           },
         ],
       };

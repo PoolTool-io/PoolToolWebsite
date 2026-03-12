@@ -59,7 +59,7 @@
     >
       <mini-prop-delay-chart
         class="d-none d-sm-flex"
-        v-if="!height.competitive && !height.forker"
+        v-if="!height.competitive && !height.forker && block.histogram"
         :hash="block.hash"
         :block="height.height"
         :histogram="JSON.parse(block.histogram)"
@@ -242,6 +242,7 @@
       class="text-center"
     >
       <mini-prop-delay-chart
+        v-if="block.histogram"
         :hash="block.hash"
         :block="height.height"
         :histogram="JSON.parse(block.histogram)"
