@@ -403,6 +403,13 @@ export const store = new Vuex.Store({
           state.heights = data;
         }
       });
+
+      // Subscribe to live epoch_data updates (epoch blocks count, fees, tx count)
+      wsClient.subscribe("epoch_data", {}, (data) => {
+        if (data != null && typeof data === "object") {
+          commit("setEpochData", data);
+        }
+      });
     },
 
     updatePools({ commit }, poolsdata) {
@@ -491,7 +498,17 @@ export const store = new Vuex.Store({
       if (data.samples != null) Vue.set(state.sync_data, "samples", data.samples);
     },
     setEpochData(state, data) {
-      state.epoch_data = data;
+      if (data != null && typeof data === "object") {
+        state.epoch_data = {
+          blocks: data.epoch_blocks ?? data.blocks ?? 0,
+          epoch: data.epoch ?? 0,
+          fees: data.epoch_feess ?? data.fees ?? 0,
+          lastBlockTime: data.last_block_time ?? data.lastBlockTime ?? 0,
+          totalOutput: data.epoch_output ?? data.totalOutput ?? 0,
+          transactions: data.epoch_tx_count ?? data.transactions ?? 0,
+          expected_blocks: data.expected_blocks ?? null,
+        };
+      }
     },
     setEcosystem(state, data) {
       if (data != null && typeof data === "object") {
