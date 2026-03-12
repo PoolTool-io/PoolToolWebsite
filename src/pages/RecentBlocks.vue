@@ -128,7 +128,7 @@
 </template>
 
 <script>
-import { getBlocks } from "@/services/api";
+import { searchBlocksByHeight } from "@/services/api";
 import { wsClient } from "@/services/ws";
 
 export default {
@@ -290,12 +290,12 @@ export default {
         updated[height].classification = isSlotBattle ? "purecompetitiveslot" : "purecompetitiveheight";
       }
 
-      // Trim to 50 most recent heights
+      // Trim to 15 most recent heights
       var heightKeys = Object.keys(updated)
         .filter(function (k) { return /^\d+$/.test(k); })
         .sort(function (a, b) { return parseInt(b) - parseInt(a); });
-      if (heightKeys.length > 50) {
-        heightKeys.slice(50).forEach(function (k) { delete updated[k]; });
+      if (heightKeys.length > 15) {
+        heightKeys.slice(15).forEach(function (k) { delete updated[k]; });
       }
 
       this.competitive = updated;
@@ -309,20 +309,14 @@ export default {
           this.loading = false;
           return;
         }
-        var resp = await getBlocks(epoch, 0);
-        var raw = resp.data || {};
-        var s = parseInt(this.search);
-        var rangeFiltered = {};
-        var startKey = s >= 10000000 && s <= 10000005 ? 9999999 : s - 5;
-        var endKey = s + 1;
-        for (var key in raw) {
-          if (!Object.prototype.hasOwnProperty.call(raw, key)) continue;
-          var k = parseInt(key);
-          if (k >= startKey && k <= endKey) {
-            rangeFiltered[key] = raw[key];
-          }
+        var blockHeight = parseInt(this.search);
+        if (isNaN(blockHeight)) {
+          this.competitive = {};
+          this.loading = false;
+          return;
         }
-        this.competitive = rangeFiltered;
+        var resp = await searchBlocksByHeight(epoch, blockHeight);
+        this.competitive = resp.data || {};
       } catch (e) {
         console.error("Failed to fetch blocks for search", e);
         this.competitive = {};

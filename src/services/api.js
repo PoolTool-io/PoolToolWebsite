@@ -87,6 +87,10 @@ export function getBlocks(epoch, limit) {
   return api.get(`/api/blocks/${epoch}`, { params });
 }
 
+export function searchBlocksByHeight(epoch, blockHeight) {
+  return api.get(`/api/blocks/${epoch}`, { params: { block_height: blockHeight } });
+}
+
 export function getRecentBlock() {
   return api.get("/api/recent_block");
 }
