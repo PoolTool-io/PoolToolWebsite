@@ -76,7 +76,7 @@ class PoolToolWS {
             });
           }
           if (channel && this._listeners[channel]) {
-            this._listeners[channel](data);
+            this._listeners[channel](data, msg.type);
           } else if (channel && isWsDebug() && typeof console !== "undefined") {
             console.warn("[PoolTool WS] no listener for channel:", channel);
           }

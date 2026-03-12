@@ -82,8 +82,9 @@ export function getPoolAwards(poolId) {
 
 // ── Blocks ────────────────────────────────────────────
 
-export function getBlocks(epoch) {
-  return api.get(`/api/blocks/${epoch}`);
+export function getBlocks(epoch, limit) {
+  const params = limit != null ? { limit } : {};
+  return api.get(`/api/blocks/${epoch}`, { params });
 }
 
 export function getRecentBlock() {

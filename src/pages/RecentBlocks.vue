@@ -128,9 +128,9 @@
 </template>
 
 <script>
-//import numeral from "numeral";
-
 import { getBlocks } from "@/services/api";
+import { wsClient } from "@/services/ws";
+
 export default {
   components: {
     GenesisBar: () => import("../components/GenesisBar"),
@@ -155,6 +155,7 @@ export default {
           ? this.$route.params.height
           : "",
       competitive: {},
+      wsEpoch: null,
     };
   },
   watch: {
@@ -165,64 +166,177 @@ export default {
         this.search = "";
       }
     },
-    refetch_watch: {
-      immediate: true,
-      async handler() {
+    search(newVal, oldVal) {
+      if (newVal !== oldVal) {
         if (
-          typeof this.search !== "undefined" &&
-          this.search != "" &&
-          this.$route.path != "/realtime/" + this.search
+          typeof newVal !== "undefined" &&
+          newVal !== "" &&
+          this.$route.path !== "/realtime/" + newVal
         ) {
-          this.$router.replace({ path: "/realtime/" + this.search });
+          this.$router.replace({ path: "/realtime/" + newVal });
         }
-
-        this.loading = true;
-        try {
-          const epoch = this.$store.getters.getGenesis.epoch;
-          if (!epoch) {
-            this.loading = false;
-            return;
-          }
-          const { data } = await getBlocks(epoch);
-          const raw = data || {};
-          if (this.search == "") {
-            const keys = Object.keys(raw).sort();
-            const last21 = keys.slice(-21);
-            var filtered = {};
-            last21.forEach((k) => { filtered[k] = raw[k]; });
-            this.competitive = filtered;
-          } else {
-            const s = parseInt(this.search);
-            var rangeFiltered = {};
-            const startKey = s >= 10000000 && s <= 10000005 ? 9999999 : s - 5;
-            const endKey = s + 1;
-            for (const [key, value] of Object.entries(raw)) {
-              const k = parseInt(key);
-              if (k >= startKey && k <= endKey) {
-                rangeFiltered[key] = value;
-              }
-            }
-            this.competitive = rangeFiltered;
-          }
-        } catch (e) {
-          console.error("Failed to fetch competitive blocks", e);
-          this.competitive = {};
+        if (newVal === "" && oldVal !== "") {
+          this.subscribeBlocks();
+        } else if (newVal !== "") {
+          this.unsubscribeBlocks();
+          this.fetchSearchBlocks();
         }
-        this.loading = false;
-      },
+      }
+    },
+    currentEpoch(newEpoch, oldEpoch) {
+      if (newEpoch && newEpoch !== oldEpoch && this.search === "") {
+        this.subscribeBlocks();
+      }
     },
   },
   created() {
     this.$store.dispatch("pollNow");
+    if (this.search !== "") {
+      this.fetchSearchBlocks();
+    } else {
+      this.subscribeBlocks();
+    }
+  },
+  beforeDestroy() {
+    this.unsubscribeBlocks();
   },
   methods: {
     clearSearch: function () {
       this.search = "";
     },
+    subscribeBlocks() {
+      const epoch = this.currentEpoch;
+      if (!epoch) return;
+      this.unsubscribeBlocks();
+      this.wsEpoch = epoch;
+      this.loading = true;
+      wsClient.subscribe("blocks", { epoch }, (data, msgType) => {
+        if (this.search !== "") return;
+        if (msgType === "snapshot" && data && typeof data === "object" && data.block == null) {
+          this.competitive = data;
+          this.loading = false;
+        } else if (data && typeof data === "object" && data.block != null) {
+          this.mergeBlockUpdate(data);
+        }
+      });
+    },
+    unsubscribeBlocks() {
+      if (this.wsEpoch) {
+        wsClient.unsubscribe("blocks");
+        this.wsEpoch = null;
+      }
+    },
+    mergeBlockUpdate(blockdata) {
+      const height = String(blockdata.block);
+      const pid = (blockdata.pool_id || blockdata.leaderPoolId || "").trim();
+      const hash = (blockdata.hash || "").trim();
+      if (!height || !hash) return;
+
+      var entry = {
+        block: blockdata.block,
+        slot: blockdata.slot,
+        epoch: blockdata.epoch,
+        epoch_slot: blockdata.epoch_slot,
+        hash: hash,
+        leaderPoolId: pid,
+        leaderPoolTicker: blockdata.pool_ticker || blockdata.leaderPoolTicker || "",
+        leaderPoolName: blockdata.pool_name || blockdata.leaderPoolName || "",
+        pool_ticker: blockdata.pool_ticker || "",
+        time: blockdata.time || blockdata.timestamp || 0,
+        timestamp: blockdata.timestamp || 0,
+        transactions: blockdata.transactions || 0,
+        fees: blockdata.fees || 0,
+        output: blockdata.output || 0,
+        body_size: blockdata.body_size || 0,
+        chained: blockdata.chained != null ? blockdata.chained : null,
+        competitive: false,
+        forker: false,
+        vrfmin: null,
+        vrfwinner: false,
+        bvrfwinner: false,
+        histogram: null,
+        lastparent: null,
+        reports: 0,
+        reporter_versions: null,
+        median: 0,
+        protocol_major: blockdata.protocol_major || 0,
+        protocol_minor: blockdata.protocol_minor || 0,
+        slotbattle: false,
+      };
+
+      var updated = Object.assign({}, this.competitive);
+      if (!updated[height]) updated[height] = {};
+      if (!updated[height][pid]) updated[height][pid] = {};
+      updated[height][pid][hash] = entry;
+
+      // Re-evaluate competitive status for this height
+      var allBlocks = [];
+      for (var k in updated[height]) {
+        if (k === "classification" || typeof updated[height][k] !== "object" || updated[height][k] === null) continue;
+        for (var bk in updated[height][k]) {
+          var b = updated[height][k][bk];
+          if (typeof b === "object" && b !== null) allBlocks.push(b);
+        }
+      }
+      var isCompetitive = allBlocks.length > 1;
+      var uniqueSlots = {};
+      allBlocks.forEach(function (b) { uniqueSlots[b.slot] = true; });
+      var isSlotBattle = Object.keys(uniqueSlots).length === 1 && isCompetitive;
+      allBlocks.forEach(function (b) {
+        b.competitive = isCompetitive;
+        b.slotbattle = isSlotBattle;
+      });
+      if (isCompetitive) {
+        updated[height].classification = isSlotBattle ? "purecompetitiveslot" : "purecompetitiveheight";
+      }
+
+      // Trim to 50 most recent heights
+      var heightKeys = Object.keys(updated)
+        .filter(function (k) { return /^\d+$/.test(k); })
+        .sort(function (a, b) { return parseInt(b) - parseInt(a); });
+      if (heightKeys.length > 50) {
+        heightKeys.slice(50).forEach(function (k) { delete updated[k]; });
+      }
+
+      this.competitive = updated;
+    },
+    async fetchSearchBlocks() {
+      if (!this.search || this.search === "") return;
+      this.loading = true;
+      try {
+        var epoch = this.currentEpoch;
+        if (!epoch) {
+          this.loading = false;
+          return;
+        }
+        var resp = await getBlocks(epoch, 0);
+        var raw = resp.data || {};
+        var s = parseInt(this.search);
+        var rangeFiltered = {};
+        var startKey = s >= 10000000 && s <= 10000005 ? 9999999 : s - 5;
+        var endKey = s + 1;
+        for (var key in raw) {
+          if (!Object.prototype.hasOwnProperty.call(raw, key)) continue;
+          var k = parseInt(key);
+          if (k >= startKey && k <= endKey) {
+            rangeFiltered[key] = raw[key];
+          }
+        }
+        this.competitive = rangeFiltered;
+      } catch (e) {
+        console.error("Failed to fetch blocks for search", e);
+        this.competitive = {};
+      }
+      this.loading = false;
+    },
   },
   computed: {
     now: function () {
       return this.$store.getters.getNow;
+    },
+    currentEpoch: function () {
+      var g = this.$store.getters.getGenesis;
+      return g ? g.epoch : 0;
     },
     shownodatafound: function () {
       return (
@@ -231,9 +345,6 @@ export default {
     },
     genesis: function () {
       return this.$store.getters.getGenesis;
-    },
-    refetch_watch: function () {
-      return this.search + this.network + (this.genesis ? this.genesis.epoch : "");
     },
     colorcompetition() {
       return (item) => {
@@ -254,6 +365,9 @@ export default {
       return this.$store.getters.getNetwork;
     },
     maxblocktime: function () {
+      if (!this.recent_blocks || this.recent_blocks.length === 0) {
+        return { blocktime: 0 };
+      }
       return this.recent_blocks.reduce((max, curren) =>
         max.blocktime > curren.blocktime ? max : curren
       );
@@ -264,6 +378,7 @@ export default {
       var indx = 0;
       if (typeof this.competitive != "undefined" && this.competitive != null) {
         for (const [key, value] of Object.entries(this.competitive)) {
+          if (!value || typeof value !== "object") continue;
           indx++;
           var h = {
             height: key,
@@ -276,13 +391,13 @@ export default {
             blocktime: null,
           };
           var slots = [];
-          //   if(Object.keys(value).length>1) {
           for (const [poolid, value2] of Object.entries(value)) {
             if (poolid == "classification") {
               continue;
             }
+            if (!value2 || typeof value2 !== "object") continue;
             for (const value3 of Object.values(value2)) {
-              if (typeof value3["chained"] !== "undefined") {
+              if (value3 && typeof value3["chained"] !== "undefined") {
                 h["usechained"] = true;
               }
             }
@@ -292,11 +407,11 @@ export default {
             if (poolid == "classification") {
               continue;
             }
-            //check if any blocks are marked as chained which should overrule vrfmin crowns
+            if (!value2 || typeof value2 !== "object") continue;
 
             for (const [hash, value3] of Object.entries(value2)) {
+              if (!value3 || typeof value3 !== "object") continue;
               var bl = { leaderPoolId: poolid };
-              //competitive.  now check if its a competitive slot or height.
 
               bl["hash"] = hash;
               bl["epoch"] = value3["epoch"];
@@ -317,7 +432,7 @@ export default {
 
               bl["vrfwinner"] = value3["vrfwinner"];
               bl["bvrfwinner"] = value3["bvrfwinner"];
-              if (Object.hasOwn(value3, "reporter_versions")) {
+              if (value3["reporter_versions"] != null && typeof value3["reporter_versions"] === "object") {
                 const regex = new RegExp(/^[\d]+\.[\d]+\.[\d]+:[a-f0-9]{5}$/);
                 var subkeys = {};
                 var subsubkeys = {};
@@ -379,7 +494,6 @@ export default {
 
           h.slotbattle = slots.length == 1;
 
-          //   }
           if (indx > 1) {
             a.push(h);
           }
