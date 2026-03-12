@@ -498,9 +498,9 @@ export default {
         }
 
         if (
-          parseFloat(item["margin"]) <
+          parseFloat(item["margin"]) / 100 <
             this.feeValues[this.appliedfilters.marginrange[0]] ||
-          parseFloat(item["margin"]) >
+          parseFloat(item["margin"]) / 100 >
             this.feeValues[this.appliedfilters.marginrange[1]]
         ) {
           return false;

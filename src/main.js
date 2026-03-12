@@ -10,7 +10,7 @@ import PerfectScrollbar from 'vue2-perfect-scrollbar';
 import VueSanitize from "vue-sanitize";
 import axios from "axios";
 import VueAxios from "vue-axios";
-import "./registerServiceWorker";
+
 import VueClipboards from "vue-clipboards";
 // rtdbPlugin removed — replaced by PoolTool API/WS services
 import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css';
@@ -31,7 +31,6 @@ import router from './router'
 
 
 import JsonCSV from 'vue-json-csv'
-import './registerServiceWorker'
 
 Vue.component('downloadCsv', JsonCSV)
 

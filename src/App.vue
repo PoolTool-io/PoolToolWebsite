@@ -169,21 +169,6 @@
         class="pt-0"
       >
         <v-container v-if="!chillin" fluid class="pt-3 pl-3 pr-3" height="100%">
-          <v-snackbar
-            top
-            right
-            dense
-            :value="updateExists"
-            :timeout="-1"
-            color="primary secondary--text"
-          >
-            An update is available
-            <template v-slot:action="{ attrs }">
-              <v-btn v-bind="attrs" text @click="refreshApp" color="red">
-                Update
-              </v-btn>
-            </template>
-          </v-snackbar>
 
           <v-alert
             :class="{
@@ -725,7 +710,6 @@ import { v4 as uuidv4 } from "uuid";
 import { mdiThemeLightDark } from "@mdi/js";
 import { preference } from "vue-preferences";
 import { mapPreferences } from "vue-preferences";
-import update from "@/mixins/update";
 import {
   login as apiLogin,
   register as apiRegister,
@@ -765,7 +749,7 @@ const myUserId = preference("myUserId", {
 
 export default {
   name: "App",
-  mixins: [update],
+  mixins: [],
   async beforeCreate() {
     // Check if we have a saved session (userId in localStorage)
     const savedUserId = localStorage.getItem("pt_user_id");
