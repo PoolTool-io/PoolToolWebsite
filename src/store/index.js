@@ -21,6 +21,7 @@ const network_raw = preference("network", { defaultValue: "Mainnet" });
 
 // ── Pool data local cache (stale-while-revalidate) ──────────────────────────
 const POOLS_CACHE_KEY = "pt_pools_v1";
+const POOLS_CACHE_REFRESH_MS = 10 * 60 * 1000; // 10 minutes — keep cache current in background
 
 function savePoolsCache(rawPools) {
   try {
@@ -91,6 +92,7 @@ export const store = new Vuex.Store({
     singlepoolssub: {},
     retiredPoolsSubscribed: false,
     poolsSubscribed: false,
+    poolsRefreshTimerId: null,
     now: Date.now(),
     intervalTimer: null,
     display_user: {},
@@ -295,6 +297,20 @@ export const store = new Vuex.Store({
           savePoolsCache(merged);
         }
       });
+
+      // ── 4. Periodic background refresh — keep cache and store current
+      state.poolsRefreshTimerId = setInterval(async () => {
+        try {
+          const resp = await getPools();
+          const rawArr = resp.data;
+          if (rawArr && rawArr.length) {
+            commit("setPoolsBulk", buildBulk(rawArr));
+            savePoolsCache(rawArr);
+          }
+        } catch (e) {
+          console.warn("Background pools refresh failed:", e);
+        }
+      }, POOLS_CACHE_REFRESH_MS);
     },
 
     bindPoolsRetired({ state }) {
