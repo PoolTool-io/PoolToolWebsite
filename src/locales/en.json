@@ -147,6 +147,7 @@
       "totalRewards": "Total Rewards",
       "addressDetail": "Address Detail",
       "details": "Details",
+      "updatingRewards": "Updating rewards… Results will appear when ready.",
       "rewardsSentToSeparateAddress": "Rewards sent to separate address",
       "fromAddress": "From Address",
       "fromPool": "From Pool",

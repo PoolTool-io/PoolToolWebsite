@@ -181,6 +181,17 @@
       </v-card-text>
     </v-card>
 
+    <v-alert
+      v-if="rewardsUpdating"
+      type="info"
+      dense
+      outlined
+      class="mx-4 mt-2"
+      dismissible
+    >
+      {{ rewardsUpdateMessage || $t("app.addressDetail.updatingRewards") }}
+    </v-alert>
+
     <v-card :dark="nightmode">
       <v-card-title class="my-0 py-0">
         {{ $t("app.addressDetail.addressDetail") }}
@@ -779,6 +790,7 @@ import parseISO from "date-fns/parseISO";
 import format from "date-fns/format";
 const Buffer = require("buffer/").Buffer;
 import { getExchangeRates, getStakeHist, pivotRewards } from "@/services/api";
+import { wsClient } from "@/services/ws";
 
 import numeral from "numeral";
 let { bech32 } = require("bech32");
@@ -1014,6 +1026,8 @@ export default {
       ahistcount: 100,
       message: "",
       showAlert: false,
+      rewardsUpdating: false,
+      rewardsUpdateMessage: "",
     };
   },
   computed: {
@@ -1656,13 +1670,30 @@ export default {
           this.genesis.epoch !== "undefined" &&
           /[a-f0-9]{56}/gim.test(this.$route.params.address)
         ) {
+          const address = this.$route.params.address;
+          // Subscribe to stake_hist so we receive pivot results via WebSocket
+          wsClient.connect();
+          wsClient.subscribe(
+            "stake_hist",
+            { address },
+            (data) => {
+              this.stake_hist = data || {};
+              this.rewardsUpdating = false;
+            }
+          );
           try {
-            await pivotRewards(this.$route.params.address);
+            const { data: pivotRes } = await pivotRewards(address);
+            if (pivotRes && pivotRes.status === "processing") {
+              this.rewardsUpdating = true;
+              this.rewardsUpdateMessage =
+                pivotRes.message ||
+                "Results will be pushed via WebSocket when ready.";
+            }
           } catch (e) {
             console.error("Failed to trigger pivotRewards", e);
           }
           try {
-            const { data } = await getStakeHist(this.$route.params.address);
+            const { data } = await getStakeHist(address);
             this.stake_hist = data || {};
           } catch (e) {
             console.error("Failed to fetch stake history", e);
@@ -1670,6 +1701,9 @@ export default {
         }
       },
     },
+  },
+  beforeDestroy() {
+    wsClient.unsubscribe("stake_hist");
   },
 };
 </script>
