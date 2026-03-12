@@ -286,7 +286,7 @@
                   icon
                   small
                   :to="{
-                    name: 'pooldelegators',
+                    name: 'poolepochs',
                     params: { poolid: item.delegatedTo },
                   }"
                   color="primary"
@@ -481,7 +481,7 @@
                             icon
                             small
                             :to="{
-                              name: 'pooldelegators',
+                              name: 'poolepochs',
                               params: { poolid: thisitem.pool },
                             }"
                             color="primary"
