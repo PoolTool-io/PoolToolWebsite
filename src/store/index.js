@@ -21,7 +21,8 @@ const network_raw = preference("network", { defaultValue: "Mainnet" });
 
 // ── Pool data local cache (stale-while-revalidate) ──────────────────────────
 const POOLS_CACHE_KEY = "pt_pools_v1";
-const POOLS_CACHE_REFRESH_MS = 10 * 60 * 1000; // 10 minutes — keep cache current in background
+const POOLS_CACHE_REFRESH_MS = 5 * 60 * 1000; // 5 min — safety-net periodic refresh
+const POOLS_CACHE_SAVE_DEBOUNCE_MS = 30_000;  // debounce localStorage writes from incremental updates
 
 function savePoolsCache(rawPools) {
   try {
@@ -39,6 +40,17 @@ function loadPoolsCache() {
     return null;
   }
 }
+
+// Backend → frontend compressed-key mapping for incremental pool updates
+const WS_POOL_UPDATE_KEYS = {
+  b:  "epoch_blocks",
+  eb: "epoch_blocks_epoch",
+  l:  "life_blocks",
+  t:  "ticker",
+  n:  "pool_name",
+  o:  "online_relays",
+  oo: "offline_relays",
+};
 // ────────────────────────────────────────────────────────────────────────────
 
 function convertPool(a, state) {
@@ -279,26 +291,43 @@ export const store = new Vuex.Store({
         console.warn("Failed to load pools:", e);
       }
 
-      // ── 3. Real-time WS updates — full snapshot → bulk replace + update cache
-      wsClient.subscribe("pools", {}, (data) => {
-        if (!Array.isArray(data)) return;
+      // ── 3. Real-time WS updates — snapshots + incremental per-pool updates ──
+      let cacheSaveTimer = null;
+      function debouncedCacheSave() {
+        if (cacheSaveTimer) return;
+        cacheSaveTimer = setTimeout(() => {
+          cacheSaveTimer = null;
+          savePoolsCache(state.pools);
+        }, POOLS_CACHE_SAVE_DEBOUNCE_MS);
+      }
 
-        commit("setPoolsBulk", buildBulk(data));
-
-        // Merge WS payload into cache so next page load is up to date
-        const existing = loadPoolsCache();
-        if (existing) {
-          const patchMap = new Map(data.map((p) => [p.pool_id ?? p.id, p]));
-          const merged = existing.map((p) => patchMap.get(p.pool_id ?? p.id) || p);
-          data.forEach((p) => {
-            const id = p.pool_id ?? p.id;
-            if (!existing.find((e) => (e.pool_id ?? e.id) === id)) merged.push(p);
-          });
-          savePoolsCache(merged);
+      wsClient.subscribe("pools", {}, (data, msgType) => {
+        if (msgType === "snapshot" && Array.isArray(data)) {
+          // Full pool list — bulk replace + persist cache immediately
+          commit("setPoolsBulk", buildBulk(data));
+          savePoolsCache(data);
+        } else if (data && typeof data === "object" && !Array.isArray(data) && data.id) {
+          // Incremental single-pool update (new block, metadata, relays)
+          commit("mergePoolUpdate", data);
+          debouncedCacheSave();
         }
       });
 
-      // ── 4. Periodic background refresh — keep cache and store current
+      // ── 4. On WS reconnect, fetch fresh data (catch anything missed while offline)
+      wsClient.onReconnect(async () => {
+        try {
+          const resp = await getPools();
+          const rawArr = resp.data;
+          if (rawArr && rawArr.length) {
+            commit("setPoolsBulk", buildBulk(rawArr));
+            savePoolsCache(rawArr);
+          }
+        } catch (e) {
+          console.warn("Reconnect pools refresh failed:", e);
+        }
+      });
+
+      // ── 5. Safety-net periodic refresh in case WS is silently broken
       state.poolsRefreshTimerId = setInterval(async () => {
         try {
           const resp = await getPools();
@@ -493,6 +522,23 @@ export const store = new Vuex.Store({
         if (p && p.pool_id != null) map[p.pool_id] = p.live_stake ?? 0;
       }
       state.activestake = map;
+    },
+    mergePoolUpdate(state, update) {
+      const poolId = update.id;
+      const idx = state.poolindex[poolId];
+      if (idx == null) return;
+      const pool = state.pools[idx];
+      let changed = false;
+      for (const [k, v] of Object.entries(update)) {
+        const field = WS_POOL_UPDATE_KEYS[k];
+        if (field && pool[field] !== v) {
+          pool[field] = v;
+          changed = true;
+        }
+      }
+      if (changed) {
+        Vue.set(state.pools, idx, Object.assign({}, pool));
+      }
     },
     setNetwork(state, data) {
       state.network = data;

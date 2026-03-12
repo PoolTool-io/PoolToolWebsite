@@ -22,6 +22,7 @@ class PoolToolWS {
     this._connected = false;
     this._reconnectTimer = null;
     this._pongTimer = null;
+    this._reconnectCallbacks = [];
   }
 
   connect() {
@@ -108,7 +109,7 @@ class PoolToolWS {
     this._reconnectTimer = setTimeout(() => {
       this._reconnectTimer = null;
       this.connect();
-      // Re-subscribe after reconnect
+      // Re-subscribe after reconnect, then notify listeners
       setTimeout(() => {
         Object.keys(this._listeners).forEach((channel) => {
           const params = this._listenerParams?.[channel] || {};
@@ -117,6 +118,9 @@ class PoolToolWS {
             channel,
             params,
           });
+        });
+        this._reconnectCallbacks.forEach((cb) => {
+          try { cb(); } catch (e) { /* ignore */ }
         });
       }, 500);
     }, 3000);
@@ -159,6 +163,10 @@ class PoolToolWS {
       this._ws = null;
     }
     this._connected = false;
+  }
+
+  onReconnect(callback) {
+    this._reconnectCallbacks.push(callback);
   }
 
   get isConnected() {
