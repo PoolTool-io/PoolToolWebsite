@@ -218,10 +218,26 @@ export default {
       function (err, thisdata) {
         var histogram = [[0], [0]];
 
-        if (err !== null) {
-          console.log("Something went wrong: " + err);
-        } else {
-          histogram = JSON.parse(thisdata.histogram);
+        if (err !== null || thisdata == null) {
+          if (err !== null) {
+            console.log("Something went wrong: " + err);
+          }
+          that.propdata = {
+            labels: histogram[1],
+            datasets: [
+              {
+                gradientColor: "green",
+                data: histogram[0],
+              },
+            ],
+          };
+          return;
+        }
+
+        try {
+          histogram = JSON.parse(thisdata.histogram || "[[0],[0]]");
+        } catch (e) {
+          histogram = [[0], [0]];
         }
         that.propdata = {
           labels: histogram[1],
@@ -232,10 +248,11 @@ export default {
             },
           ],
         };
-        that.details["reporter_count"] = Object.keys(thisdata.rawtips).length;
-        that.details["protocol_major"] = thisdata["protocol_major"];
-        that.details["protocol_minor"] = thisdata["protocol_minor"];
-        that.details["median"] = thisdata["median"];
+        const rawtips = thisdata && thisdata.rawtips;
+        that.details["reporter_count"] = Object.keys(rawtips || {}).length;
+        that.details["protocol_major"] = thisdata["protocol_major"] ?? 0;
+        that.details["protocol_minor"] = thisdata["protocol_minor"] ?? 0;
+        that.details["median"] = thisdata["median"] ?? 0;
 
         if (Object.hasOwn(thisdata, "reporter_versions")) {
           const regex = new RegExp(/^[\d]+\.[\d]+\.[\d]+:[a-f0-9]{5}$/);
