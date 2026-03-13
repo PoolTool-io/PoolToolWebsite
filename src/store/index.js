@@ -703,16 +703,18 @@ export const store = new Vuex.Store({
               })()
             : 0,
         prices: state.ecosystem != null ? state.ecosystem.prices || {} : {},
-        forecast_rewards_complete_epoch:
-          state.most_recent_block ? state.most_recent_block.epoch - 1 : 0,
-        actual_rewards_complete_epoch:
-          state.most_recent_block ? state.most_recent_block.epoch - 2 : 0,
-        new_rewards_complete_epoch:
-          state.most_recent_block ? state.most_recent_block.epoch - 2 : 0,
-        pool_forecast_calculated_epoch:
-          state.most_recent_block ? state.most_recent_block.epoch - 1 : 0,
-        pool_actuals_calculated_epoch:
-          state.most_recent_block ? state.most_recent_block.epoch - 2 : 0,
+        rewards_complete_epoch:
+          state.ecosystem != null && state.ecosystem.rewardsCompleteEpoch
+            ? state.ecosystem.rewardsCompleteEpoch
+            : state.most_recent_block
+            ? state.most_recent_block.epoch - 2
+            : 0,
+        snapshot_complete_epoch:
+          state.ecosystem != null && state.ecosystem.snapshotCompleteEpoch
+            ? state.ecosystem.snapshotCompleteEpoch
+            : state.most_recent_block
+            ? state.most_recent_block.epoch - 2
+            : 0,
         livedata2: {
           max_livestake:
             state.ecosystem != null ? (state.ecosystem.maxLiveStake || 0) : 0,

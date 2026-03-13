@@ -352,7 +352,7 @@
                 ? 'text--disabled'
                 : ''
             "
-            v-if="!item.forecast"
+            v-if="!item.pending"
           >
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
@@ -415,7 +415,7 @@
                   }}
                 </span>
               </template>
-              <span>{{ $t("global.forecasted") }}</span>
+              <span>{{ $t("global.pending") }}</span>
             </v-tooltip>
             <span class="pr-8"> </span>
           </span>
@@ -529,7 +529,7 @@
                 ? 'text--disabled'
                 : ''
             "
-            v-if="!item.forecast"
+            v-if="!item.pending"
           >
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
@@ -563,11 +563,11 @@
                 }}
               </span>
             </template>
-            <span>{{ $t("global.forecasted") }}</span>
+            <span>{{ $t("global.pending") }}</span>
           </v-tooltip>
         </template>
         <template #[`item.total_rewards`]="{ item }">
-          <span v-if="!item.forecast">
+          <span v-if="!item.pending">
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <span v-bind="attrs" v-on="on">{{
@@ -600,7 +600,7 @@
                 }}
               </span>
             </template>
-            <span>{{ $t("global.forecasted") }}</span>
+            <span>{{ $t("global.pending") }}</span>
           </v-tooltip>
         </template>
       </v-data-table>
@@ -846,7 +846,7 @@ export default {
         delegatedTo:
           rawEntry.delegatedTo != null ? rawEntry.delegatedTo : "None",
         delegatedToTicker: rawEntry.delegatedToTicker,
-        forecast: rawEntry.forecast != null ? rawEntry.forecast : false,
+        pending: rawEntry.pending != null ? rawEntry.pending : (rawEntry.forecast != null ? rawEntry.forecast : false),
         operatorRewards: rawEntry.operatorRewards,
         stakeRewards: rawEntry.stakeRewards,
         rewardsSentTo: rawEntry.rewardsSentTo,
@@ -1132,7 +1132,7 @@ export default {
 
           return (
             a.rewardDate != null &&
-            !a.forecast &&
+            !a.pending &&
             isBetweenDateRange &&
             isBetweenEpochRange
           );
@@ -1591,7 +1591,7 @@ export default {
     curvalue: function () {
       if (this.ahist != null && this.ahist.length) {
         return this.ahist
-          .filter((item) => item.forecast == true)
+          .filter((item) => item.pending == true)
           .reduce(
             (max, curren) => (max.epoch > curren.epoch ? max : curren),
             0
@@ -1603,7 +1603,7 @@ export default {
     totals: function () {
       if (this.ahist != null && this.ahist.length) {
         return this.ahist
-          .filter((item) => item.forecast == false)
+          .filter((item) => item.pending == false)
           .reduce(
             (max, curren) => (max.epoch > curren.epoch ? max : curren),
             0
@@ -1647,7 +1647,7 @@ export default {
       return (
         String(this.$route.params.address) +
         String(this.genesis.epoch) +
-        String(this.genesis.new_rewards_complete_epoch) +
+        String(this.genesis.rewards_complete_epoch) +
         String(this.binding_rates_finished)
       );
     },

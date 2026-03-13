@@ -4,7 +4,13 @@ module.exports = {
   transpileDependencies: [
     'vuetify'
   ],
-  
+
+  devServer: {
+    client: {
+      webSocketURL: 'auto://0.0.0.0:0/ws',
+    },
+  },
+
   pluginOptions: {
     i18n: {
       locale: 'en',

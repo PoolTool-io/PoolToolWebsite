@@ -83,7 +83,7 @@
         </template>
 
         <template #[`item.epoch_rewards`]="{ item }">
-          <span v-if="genesis.epoch - 1 == item.epoch">
+          <span v-if="item.epoch > genesis.rewards_complete_epoch">
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <span
@@ -96,7 +96,7 @@
                   }}
                 </span>
               </template>
-              <span>{{ $t("global.forecasted") }}</span>
+              <span>{{ $t("global.pending") }}</span>
             </v-tooltip>
           </span>
           <span v-else>
@@ -104,7 +104,7 @@
           </span>
         </template>
         <template #[`item.epoch_tax`]="{ item }">
-          <span v-if="genesis.epoch - 1 == item.epoch">
+          <span v-if="item.epoch > genesis.rewards_complete_epoch">
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <span
@@ -115,7 +115,7 @@
                   {{ item.epoch_tax | toada | numFormat("0,0.0a") | zeronull }}
                 </span>
               </template>
-              <span>{{ $t("global.forecasted") }}</span>
+              <span>{{ $t("global.pending") }}</span>
             </v-tooltip>
           </span>
           <span v-else>
@@ -145,7 +145,7 @@
           }}
         </template>
         <template #[`item.ros`]="{ item }">
-          <span v-if="genesis.epoch - 1 == item.epoch">
+          <span v-if="item.epoch > genesis.rewards_complete_epoch">
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <span
@@ -156,7 +156,7 @@
                   {{ item.ros | fpercent }}
                 </span>
               </template>
-              <span>{{ $t("global.forecasted") }}</span>
+              <span>{{ $t("global.pending") }}</span>
             </v-tooltip>
           </span>
           <span v-else-if="genesis.epoch != item.epoch">
