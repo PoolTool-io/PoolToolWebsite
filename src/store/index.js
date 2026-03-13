@@ -517,7 +517,8 @@ export const store = new Vuex.Store({
       const map = {};
       for (let i = 0; i < state.pools.length; i++) {
         const p = state.pools[i];
-        if (p && p.pool_id != null) map[p.pool_id] = p.live_stake ?? 0;
+        if (p && p.pool_id != null)
+          map[p.pool_id] = p.active_stake ?? p.live_stake ?? 0;
       }
       state.activestake = map;
     },
@@ -529,7 +530,8 @@ export const store = new Vuex.Store({
       const map = {};
       for (let i = 0; i < pools.length; i++) {
         const p = pools[i];
-        if (p && p.pool_id != null) map[p.pool_id] = p.live_stake ?? 0;
+        if (p && p.pool_id != null)
+          map[p.pool_id] = p.active_stake ?? p.live_stake ?? 0;
       }
       state.activestake = map;
     },
