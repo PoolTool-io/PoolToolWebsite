@@ -36,24 +36,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css">
   </head>
   <body>
-    <!-- One-time service worker unregister: clears stuck old SW so new code loads (removable after deploy is stable) -->
-    <script>
-      (function () {
-        if (typeof navigator === 'undefined' || !navigator.serviceWorker || !navigator.serviceWorker.getRegistrations) return;
-        var doneKey = 'pooltool-sw-unregister-done';
-        navigator.serviceWorker.getRegistrations().then(function (regs) {
-          if (regs.length === 0) {
-            try { sessionStorage.removeItem(doneKey); } catch (e) {}
-            return;
-          }
-          if (sessionStorage.getItem(doneKey)) return;
-          sessionStorage.setItem(doneKey, '1');
-          Promise.all(regs.map(function (r) { return r.unregister(); })).then(function () {
-            window.location.reload();
-          });
-        });
-      })();
-    </script>
     <noscript>
       <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
