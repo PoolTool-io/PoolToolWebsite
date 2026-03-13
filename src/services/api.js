@@ -176,6 +176,14 @@ export function pivotRewards(stakeKeys) {
   return api.post("/api/pivotrewards", { stake_keys: keys.slice(0, 5) });
 }
 
+// ── ROS Histograms ───────────────────────────────────
+
+export function getRosHistogram(type, epoch) {
+  const params = { type };
+  if (epoch != null) params.epoch = epoch;
+  return api.get("/api/ros_histogram", { params });
+}
+
 // ── Health ────────────────────────────────────────────
 
 export function getHealth() {

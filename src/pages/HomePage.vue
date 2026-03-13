@@ -154,7 +154,7 @@
 </template>
 <script>
 import numeral from "numeral";
-import { pivotRewards, getStakeHist } from "@/services/api";
+import { pivotRewards, getStakeHist, getRosHistogram } from "@/services/api";
 import pooltable from "@/mixins/pooltable";
 import poolfavorites from "@/mixins/poolfavorites";
 import GenesisBar from "@/components/GenesisBar";
@@ -291,8 +291,15 @@ export default {
         }
       }
     },
-    bindHistogramDatakeys: function () {
-      this.rewardsHistogramkeys = {};
+    bindHistogramDatakeys: async function () {
+      try {
+        const { data } = await getRosHistogram("stake");
+        if (data && data.histogramdata && data.histogramdata.length) {
+          this.rewardsHistogramkeys = data;
+        }
+      } catch (e) {
+        console.error("Failed to load stake ROS histogram", e);
+      }
     },
     toggleAddressFavorite: function (addressid) {
       var indx = this.favoriteaddrs.indexOf(addressid);
@@ -305,8 +312,15 @@ export default {
       favoriteaddr.set(this.favoriteaddrs);
     },
 
-    bindHistogramData: function () {
-      this.rewardsHistogram = {};
+    bindHistogramData: async function () {
+      try {
+        const { data } = await getRosHistogram("pool");
+        if (data && data.histogramdata && data.histogramdata.length) {
+          this.rewardsHistogram = data;
+        }
+      } catch (e) {
+        console.error("Failed to load pool ROS histogram", e);
+      }
     },
     setCurrency(currency) {
       this.$emit("setCurrency", currency);
