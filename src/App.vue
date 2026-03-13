@@ -1044,6 +1044,9 @@ export default {
     setNotifications(value) {
       this.notifications = value;
     },
+    enableNotifications() {
+      // No-op: push notification setup can be added here if needed
+    },
 
     executeMigrations() {
       if (application_version.get() == null) {
