@@ -27,44 +27,8 @@
             </p>
           </blockquote>
           <v-divider class="ma-4 info" style="opacity: 0.82"></v-divider>
-          <h4>
-            <v-icon color="red">mdi-heart</v-icon>{{ $t("app.about.thankYou") }}
-            <v-icon color="red">mdi-heart</v-icon>
-            {{ $t("app.about.toOurCommunityTranslators") }} :
-          </h4>
-          <ul>
-            <li v-for="(lang, k) in langs" v-bind:key="k">
-              <span>{{ lang.language }}</span> :
-              <span
-                v-for="(contributor, j) in lang.contributors"
-                v-bind:key="j"
-              >
-                {{ contributor.name }}
-                <span v-if="contributor.pools.length">(</span>
-                <span v-for="(thispool, i) in contributor.pools" v-bind:key="i">
-                  <router-link
-                    :class="nightmode ? 'white--text' : 'black--text'"
-                    text
-                    :to="{
-                      name: 'poolepochs',
-                      params: { poolid: Object.values(thispool)[0] },
-                    }"
-                    >{{ Object.keys(thispool)[0] }}</router-link
-                  ><span v-if="i != contributor.pools.length - 1">, </span>
-                </span>
-                <span v-if="contributor.pools.length">)</span>
-                <span v-if="j != lang.contributors.length - 1">, </span>
-              </span>
-            </li>
-          </ul>
-          <p class="pt-5">
-            Want to contribute a language? Please reach out us in our
-            <a href="https://t.me/pooltool" target="_blank"
-              >PoolTool Telegram Channel</a
-            >
-          </p>
+          
 
-          <v-divider class="ma-4 info" style="opacity: 0.82"></v-divider>
 
           <h4>{{ $t("app.about.ifYouLikeWhatWeDo") }}:</h4>
           <ul>
@@ -93,23 +57,10 @@
                 <v-icon small>mdi-content-copy</v-icon>
               </v-btn>
             </li>
-            <li>
-              {{ $t("app.about.youCanBeA") }}
-              <a
-                href="https://www.patreon.com/user?u=32491325&fan_landing=true"
-                target="_blank"
-                >Patreon</a
-              >
-              {{ $t("app.about.ofPoolTool") }}.
-            </li>
+            
           </ul>
           <v-divider class="ma-4 info" style="opacity: 0.82"></v-divider>
-          <p class="pt-5">
-            {{ $t("app.about.ifYouHaveFeedback") }}:
-            <a href="https://github.com/papacarp/pooltool.io"
-              >github.com...pooltool.io</a
-            >
-          </p>
+         
         </v-col>
       </v-row>
     </v-card>
