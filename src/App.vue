@@ -348,48 +348,147 @@
               {{ loginalertmessage }}
             </v-alert>
           </v-card-text>
-          <v-card-text v-if="authform == 'sendada'" class="">
-            <p v-if="verificationtoaddress != ''" class="text-center">
-              {{ $t("app.toVerify") }}: <br /><b>{{ verificationamount }}</b>
-              ADA
-              <v-btn text small icon v-clipboard="verificationamount">
-                <v-icon small>mdi-content-copy</v-icon>
-              </v-btn>
-              <br />
-              {{ $t("app.toAddress") }}:<br />
-              <b
-                >{{ this.verificationtoaddress | ellipsiscrypto(24) }}
-                <v-btn text small icon v-clipboard="this.verificationtoaddress">
-                  <v-icon small>mdi-content-copy</v-icon>
-                </v-btn>
-              </b>
-              <br /><br />
-              {{ $t("app.toVerify1Hr") }}
-            </p>
-            <v-alert
-              v-if="verifymessage != null"
-              border="top"
-              colored-border
-              :type="verifymessagecolor"
-              elevation="2"
+          <v-card-text v-if="authform == 'sendada'" class="pa-4">
+            <v-stepper
+              v-model="verifyStep"
+              alt-labels
+              flat
+              class="elevation-0 transparent"
+              style="box-shadow: none"
             >
-              {{ verifymessage }}
-            </v-alert>
+              <v-stepper-header class="elevation-0" style="box-shadow: none">
+                <v-stepper-step
+                  :complete="verifyStep > 1"
+                  step="1"
+                  :color="verifyStep > 1 ? 'success' : 'primary'"
+                >
+                  Send Payment
+                </v-stepper-step>
+                <v-divider></v-divider>
+                <v-stepper-step
+                  :complete="verifyStep > 2"
+                  step="2"
+                  :color="verifyStep > 2 ? 'success' : 'primary'"
+                >
+                  Confirming
+                </v-stepper-step>
+                <v-divider></v-divider>
+                <v-stepper-step
+                  step="3"
+                  :complete="verifyStep >= 3"
+                  :color="verifyStep >= 3 ? 'success' : ''"
+                >
+                  Done
+                </v-stepper-step>
+              </v-stepper-header>
+            </v-stepper>
 
-            <v-btn
-              v-if="showloginbutton && !isSignedIn"
-              @click="authform = 'signin'"
-              block
-              color="primary secondary--text"
-              >{{ $t("app.signIn") }}
-            </v-btn>
-            <v-btn
-              v-if="showclosebutton && isSignedIn"
-              @click="dialog = false"
-              block
-              color="primary secondary--text"
-              >{{ $t("app.close") }}
-            </v-btn>
+            <!-- Step 1 & 2: Payment details + waiting -->
+            <div v-if="verifyStep < 3">
+              <div v-if="verificationtoaddress != ''" class="mt-2">
+                <div class="text-subtitle-2 grey--text text--lighten-1 mb-2">
+                  Send exactly this amount:
+                </div>
+                <v-sheet
+                  rounded
+                  outlined
+                  class="pa-3 d-flex align-center justify-space-between"
+                  color="grey darken-3"
+                >
+                  <span class="text-h6 font-weight-bold primary--text">
+                    {{ verificationamount }} ADA
+                  </span>
+                  <v-btn icon small v-clipboard="verificationamountRaw" @click="copiedAmount = true">
+                    <v-icon small :color="copiedAmount ? 'success' : ''">
+                      {{ copiedAmount ? 'mdi-check' : 'mdi-content-copy' }}
+                    </v-icon>
+                  </v-btn>
+                </v-sheet>
+
+                <div class="text-subtitle-2 grey--text text--lighten-1 mt-3 mb-2">
+                  To this address:
+                </div>
+                <v-sheet
+                  rounded
+                  outlined
+                  class="pa-3 d-flex align-center justify-space-between"
+                  color="grey darken-3"
+                >
+                  <span class="text-body-2" style="word-break: break-all; line-height: 1.4">
+                    {{ verificationtoaddress }}
+                  </span>
+                  <v-btn icon small v-clipboard="verificationtoaddress" @click="copiedAddr = true" class="ml-2 flex-shrink-0">
+                    <v-icon small :color="copiedAddr ? 'success' : ''">
+                      {{ copiedAddr ? 'mdi-check' : 'mdi-content-copy' }}
+                    </v-icon>
+                  </v-btn>
+                </v-sheet>
+              </div>
+
+              <!-- Waiting indicator -->
+              <div class="mt-4">
+                <v-progress-linear
+                  indeterminate
+                  color="primary"
+                  rounded
+                  height="3"
+                  class="mb-3"
+                ></v-progress-linear>
+
+                <div class="d-flex align-center mb-2">
+                  <v-icon small color="primary" class="mr-2 pulsing-icon">mdi-magnify-scan</v-icon>
+                  <span class="text-body-2">
+                    Watching for your payment...
+                    <span class="grey--text">(checking every 10s)</span>
+                  </span>
+                </div>
+
+                <v-alert
+                  dense
+                  text
+                  type="info"
+                  class="mt-2 mb-0 text-body-2"
+                  icon="mdi-information-outline"
+                >
+                  Our chain indexer runs <strong>~6 blocks behind the tip</strong>.
+                  After sending your transaction, it typically takes
+                  <strong>2-3 minutes</strong> for confirmation to appear here.
+                  Don't close this dialog — we'll detect it automatically.
+                </v-alert>
+              </div>
+            </div>
+
+            <!-- Step 3: Confirmed -->
+            <div v-if="verifyStep >= 3" class="text-center mt-2">
+              <v-icon color="success" size="64" class="mb-3">mdi-check-circle</v-icon>
+              <div class="text-h6 success--text mb-2">Payment Confirmed!</div>
+              <div class="text-body-2 grey--text text--lighten-1 mb-4" v-if="authFlowType === 'verify'">
+                Your address has been verified.
+                <span v-if="!isSignedIn">You can now sign in.</span>
+              </div>
+              <div class="text-body-2 grey--text text--lighten-1 mb-4" v-if="authFlowType === 'reset'">
+                Your password has been reset.
+                You can now sign in with your new password.
+              </div>
+              <v-btn
+                v-if="!isSignedIn"
+                @click="authform = 'signin'"
+                block
+                color="primary secondary--text"
+                class="mt-2"
+              >
+                {{ $t("app.signIn") }}
+              </v-btn>
+              <v-btn
+                v-if="isSignedIn"
+                @click="dialog = false"
+                block
+                color="primary secondary--text"
+                class="mt-2"
+              >
+                {{ $t("app.close") }}
+              </v-btn>
+            </div>
           </v-card-text>
 
           <v-card-text v-if="authform == 'alreadyverified'" class="">
@@ -614,8 +713,10 @@
 
           <v-card-text v-if="authform == 'addressreset'" class="">
             <h2 class="">{{ $t("app.resetPassword") }}</h2>
-
-            {{ $t("app.resetPasswordDetails") }}
+            <div class="mt-1 mb-2 text-body-2 grey--text text--lighten-1">
+              To reset your password, enter your stake address and a new password.
+              You'll be asked to send a small ADA fee to verify ownership.
+            </div>
             <v-row>
               <v-col class="pt-4 col-12" v-if="this.myUserId == null">
                 <v-text-field
@@ -715,6 +816,8 @@ import {
   register as apiRegister,
   startVerification,
   checkVerification,
+  resetPassword as apiResetPassword,
+  checkReset,
 } from "@/services/api";
 
 //import CatalystPromoMarloweHub from "@/components/CatalystPromo";
@@ -767,13 +870,17 @@ export default {
     setInterval(
       function () {
         var self = this;
-        if (
-          this.checkverifystatus == true &&
-          this.address != null
-        ) {
+        if (this.checkverifystatus && this.address != null) {
           checkVerification(this.address)
             .then(function (response) {
               self.processCheckVerifyStatus(response.data);
+            })
+            .catch(() => {});
+        }
+        if (this.checkresetstatus && this.address != null) {
+          checkReset(this.address)
+            .then(function (response) {
+              self.processCheckResetStatus(response.data);
             })
             .catch(() => {});
         }
@@ -980,47 +1087,17 @@ export default {
     },
     processCheckResetStatus: function (response) {
       if ("status" in response) {
-        if (response.status == "verified") {
-          if (this.isSignedIn) {
-            this.verifymessage = "Transaction Verified.  Password is reset.";
-            this.showclosebutton = true;
-          } else {
-            this.verifymessage =
-              "Transaction Verified.  Password is reset.  You may now login with your new password.";
-            this.showloginbutton = true;
-          }
-
-          this.verifymessagecolor = "success";
-
-          this.checkverifystatus = false;
-        } else {
-          this.authform = "sendada";
-          this.verifymessage = "Waiting to receive verification transaction";
-          this.verifymessagecolor = "info";
-          this.showclosebutton = false;
-          this.showloginbutton = false;
+        if (response.status === "completed") {
+          this.verifyStep = 3;
+          this.checkresetstatus = false;
         }
       }
     },
     processCheckVerifyStatus: function (response) {
       if ("status" in response) {
-        if (response.status == "verified") {
-          if (this.isSignedIn) {
-            this.verifymessage =
-              "Address Verified.  It will be added to your account.";
-            this.showclosebutton = true;
-          } else {
-            this.verifymessage = "Address Verified.  You may now login.";
-            this.showloginbutton = true;
-          }
-          this.verifymessagecolor = "success";
-          this.checkresetstatus = false;
-        } else {
-          this.authform = "sendada";
-          this.verifymessage = "Waiting to receive verification transaction";
-          this.verifymessagecolor = "info";
-          this.showclosebutton = false;
-          this.showloginbutton = false;
+        if (response.status === "verified") {
+          this.verifyStep = 3;
+          this.checkverifystatus = false;
         }
       }
     },
@@ -1068,29 +1145,37 @@ export default {
     resetPassword: function () {
       this.confirmcode = null;
       this.authLoading = true;
-      // Password reset uses the same verification flow in the new API
       var self = this;
-      startVerification(this.address, uuidv4(), this.password)
+      apiResetPassword(this.address, this.password)
         .then(function (response) {
           if (response.data.status === "pending") {
+            self.verificationamountRaw = numeral(
+              response.data.payment_amount / 1e6
+            ).format("0.000000");
             self.verificationamount = numeral(
               response.data.payment_amount / 1e6
             ).format("0,0.000000");
             self.verificationtoaddress = response.data.payment_address;
             self.authform = "sendada";
-            self.verifymessage = "Waiting to receive verification transaction";
-            self.verifymessagecolor = "success";
+            self.authFlowType = "reset";
+            self.verifyStep = 1;
             self.authLoading = false;
-            self.checkverifystatus = true;
+            self.checkresetstatus = true;
+            self.checkverifystatus = false;
+            self.copiedAmount = false;
+            self.copiedAddr = false;
           } else {
             self.loginalertcolor = "error";
             self.loginalertmessage = "Something went wrong. Please try again.";
             self.authLoading = false;
           }
         })
-        .catch(() => {
+        .catch((error) => {
+          const status = error.response ? error.response.status : 0;
           self.loginalertcolor = "error";
-          self.loginalertmessage = "Invalid Address or Password";
+          self.loginalertmessage = status === 404
+            ? "No account found for this stake address."
+            : "Something went wrong. Please try again.";
           self.authLoading = false;
         });
     },
@@ -1105,53 +1190,44 @@ export default {
       this.authLoading = true;
       var self = this;
 
-      // First register the account, then start verification
+      function enterPaymentFlow(response) {
+        if (response.data.status === "already_verified") {
+          self.authform = "alreadyverified";
+          self.loginalertmessage = "This address has already been verified";
+          self.loginalertcolor = "success";
+          self.showloginbutton = true;
+          self.authLoading = false;
+        } else if (response.data.status === "pending") {
+          self.verificationamountRaw = numeral(
+            response.data.payment_amount / 1e6
+          ).format("0.000000");
+          self.verificationamount = numeral(
+            response.data.payment_amount / 1e6
+          ).format("0,0.000000");
+          self.verificationtoaddress = response.data.payment_address;
+          self.authform = "sendada";
+          self.authFlowType = "verify";
+          self.verifyStep = 1;
+          self.authLoading = false;
+          self.checkverifystatus = true;
+          self.checkresetstatus = false;
+          self.copiedAmount = false;
+          self.copiedAddr = false;
+        }
+      }
+
       apiRegister(this.address, this.password)
         .then(function (regResp) {
           self.verifyuserid = regResp.data.user_id;
           return startVerification(self.address, self.verifyuserid, self.password);
         })
-        .then(function (response) {
-          if (response.data.status === "already_verified") {
-            self.authform = "alreadyverified";
-            self.loginalertmessage = "This address has already been verified";
-            self.loginalertcolor = "success";
-            self.showloginbutton = true;
-            self.authLoading = false;
-          } else if (response.data.status === "pending") {
-            self.verificationamount = numeral(
-              response.data.payment_amount / 1e6
-            ).format("0,0.000000");
-            self.verificationtoaddress = response.data.payment_address;
-            self.authform = "sendada";
-            self.verifymessage = "Waiting to receive verification transaction";
-            self.verifymessagecolor = "success";
-            self.authLoading = false;
-            self.checkverifystatus = true;
-          }
-        })
+        .then(enterPaymentFlow)
         .catch((error) => {
           const status = error.response ? error.response.status : 0;
           if (status === 409) {
-            // Already registered — just start verification
             self.verifyuserid = self.userId || uuidv4();
             startVerification(self.address, self.verifyuserid, self.password)
-              .then((resp) => {
-                if (resp.data.status === "pending") {
-                  self.verificationamount = numeral(
-                    resp.data.payment_amount / 1e6
-                  ).format("0,0.000000");
-                  self.verificationtoaddress = resp.data.payment_address;
-                  self.authform = "sendada";
-                  self.verifymessage = "Waiting to receive verification transaction";
-                  self.verifymessagecolor = "success";
-                  self.checkverifystatus = true;
-                } else {
-                  self.authform = "alreadyverified";
-                  self.showloginbutton = true;
-                }
-                self.authLoading = false;
-              })
+              .then(enterPaymentFlow)
               .catch(() => {
                 self.loginalertcolor = "error";
                 self.loginalertmessage = "Something went wrong. Please try again.";
@@ -1274,9 +1350,14 @@ export default {
       checkresetstatus: false,
       checkverifystatus: false,
       verificationamount: 0,
+      verificationamountRaw: "",
       verificationtoaddress: "",
       verifymessage: "",
       verifymessagecolor: "blue",
+      verifyStep: 1,
+      authFlowType: "verify",
+      copiedAmount: false,
+      copiedAddr: false,
 
       reloadPoolTool: false,
       address: null,
@@ -1363,6 +1444,14 @@ export default {
 }
 </style>
 <style lang="scss" scoped>
+@keyframes pulse-opacity {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.pulsing-icon {
+  animation: pulse-opacity 2s ease-in-out infinite;
+}
+
 #nav {
   padding: 30px;
 

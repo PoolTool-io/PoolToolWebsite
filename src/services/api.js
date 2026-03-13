@@ -36,6 +36,17 @@ export function checkVerification(stakeKey) {
   return api.get(`/auth/verify/${stakeKey}`);
 }
 
+export function resetPassword(stakeKey, newPassword) {
+  return api.post("/auth/reset_password", {
+    stake_key: stakeKey,
+    new_password: newPassword,
+  });
+}
+
+export function checkReset(stakeKey) {
+  return api.get(`/auth/check_reset/${stakeKey}`);
+}
+
 export function queryAddress(stakeKey) {
   return api.post("/auth/queryaddress", { stake_key: stakeKey });
 }

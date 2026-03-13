@@ -43,7 +43,7 @@ import validationMixin from "@/mixins/validationMixin";
 import translationEditItem from "@/components/translationEditItem";
 import { required } from "vuelidate/lib/validators";
 
-import api from "@/services/api";
+import api from "@/services/api"; // eslint-disable-line no-unused-vars
 
 function flattenObj(obj, parent, res = {}) {
   for (let key in obj) {
