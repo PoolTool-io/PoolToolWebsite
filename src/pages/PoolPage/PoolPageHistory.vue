@@ -382,7 +382,7 @@ export default {
                 ? 0
                 : this.pool_fee_history[key],
             ros:
-              this.ros_history[key] == null ? 0 : this.ros_history[key] / 100,
+              this.ros_history[key] == null ? 0 : this.ros_history[key],
           };
           a.push(entry);
         }
