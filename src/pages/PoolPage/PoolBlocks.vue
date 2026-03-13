@@ -174,7 +174,7 @@
 
 <script>
 import VueNumericInput from "vue-numeric-input";
-import { getPoolBlocks, getBlocks } from "@/services/api";
+import { getPoolBlocks, searchBlocksByHeight } from "@/services/api";
 import { mapPreferences } from "vue-preferences";
 export default {
   props: ["nightmode", "pool", "userId", "genesis"],
@@ -198,25 +198,33 @@ export default {
   methods: {
     explore: async function (item) {
       try {
-        const { data } = await getBlocks(this.target_epoch);
-        if (data) {
-          var a = [];
-          var orphans = [];
-          for (const [key, value] of Object.entries(data.blocks || {})) {
-            if (parseInt(key) >= item.block - 5 && parseInt(key) < item.block + 5) {
-              value["chained"] = true;
-              a.push(value);
+        const { data } = await searchBlocksByHeight(this.target_epoch, item.block);
+        const a = [];
+        const orphans = [];
+        // API returns { blockHeight: { poolId: { hash: blockData } } }
+        for (const [heightKey, poolsAtHeight] of Object.entries(data || {})) {
+          if (poolsAtHeight === null || typeof poolsAtHeight !== "object") continue;
+          const height = parseInt(heightKey, 10);
+          if (height < item.block - 5 || height > item.block + 5) continue;
+          for (const poolId of Object.keys(poolsAtHeight)) {
+            if (poolId === "classification") continue;
+            const byHash = poolsAtHeight[poolId];
+            if (byHash && typeof byHash === "object") {
+              for (const blockData of Object.values(byHash)) {
+                if (blockData && typeof blockData === "object") {
+                  blockData.tkey = `${blockData.block}-${blockData.hash}-${blockData.leaderPoolId || ""}`;
+                  if (blockData.chained) {
+                    a.push(blockData);
+                  } else {
+                    orphans.push(blockData);
+                  }
+                }
+              }
             }
           }
-          this.exploreblocks = a.slice(0, 10);
-          for (const [key, value] of Object.entries(data.deleted_blocks || {})) {
-            if (parseInt(key) >= item.block - 5 && parseInt(key) <= item.block + 5) {
-              value["chained"] = false;
-              orphans.push(value);
-            }
-          }
-          this.exploreorphans = orphans;
         }
+        this.exploreblocks = a.slice(0, 10);
+        this.exploreorphans = orphans;
       } catch (e) {
         console.error("Failed to explore blocks", e);
       }
