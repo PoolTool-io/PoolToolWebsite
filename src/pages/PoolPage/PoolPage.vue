@@ -168,7 +168,7 @@ export default {
         selected_pool["blockstake"] =
           (this.activestake != null && this.activestake !== 0)
             ? this.activestake
-            : (selected_pool.live_stake != null ? selected_pool.live_stake : 0);
+            : (selected_pool.active_stake ?? selected_pool.live_stake ?? 0);
 
         selected_pool["roi"] = selected_pool.epoch_ros ?? 0;
         selected_pool["epoch_tax"] = selected_pool.epoch_tax ?? 0;
