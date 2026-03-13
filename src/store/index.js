@@ -544,6 +544,9 @@ export const store = new Vuex.Store({
         Vue.set(state.pools, idx, Object.assign({}, pool));
       }
     },
+    setLanguages(state, data) {
+      state.langs_raw = data;
+    },
     setNetwork(state, data) {
       state.network = data;
       network_raw.set(data);

@@ -43,8 +43,6 @@ import validationMixin from "@/mixins/validationMixin";
 import translationEditItem from "@/components/translationEditItem";
 import { required } from "vuelidate/lib/validators";
 
-import api from "@/services/api"; // eslint-disable-line no-unused-vars
-
 function flattenObj(obj, parent, res = {}) {
   for (let key in obj) {
     let propName = parent ? parent + "." + key : key;
@@ -211,14 +209,14 @@ export default {
 
     loadTranslation: async function (locale) {
       try {
-        const enResp = await api.get("/api/translations/en");
-        this.translations_raw_en = enResp.data || {};
+        const enResp = await fetch("/locales/en.json");
+        this.translations_raw_en = await enResp.json();
       } catch (e) {
         console.error("Failed to fetch English translations", e);
       }
       try {
-        const localeResp = await api.get(`/api/translations/${locale}`);
-        this.translations_raw = localeResp.data || {};
+        const localeResp = await fetch(`/locales/${locale}.json`);
+        this.translations_raw = await localeResp.json();
       } catch (e) {
         console.error("Failed to fetch translations for " + locale, e);
       }

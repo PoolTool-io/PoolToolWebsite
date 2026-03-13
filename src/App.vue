@@ -925,6 +925,7 @@ export default {
 
   mounted() {
     this.loadTranslations(this.locale);
+    this.loadLanguages();
     this.enableNotifications();
     window.addEventListener("resize", () => {
       this.windowWidth = window.innerWidth;
@@ -1294,29 +1295,37 @@ export default {
       this.loadTranslations(this.$i18n.locale);
     },
     loadTranslations(locale) {
-      console.log(locale);
       this.locale = locale;
       this.isLoading = true;
       setDocumentLang(locale);
       setDocumentDirectionPerLocale(locale);
       this.$i18n.locale = locale;
 
-      const api = require("@/services/api").default;
-      api.get("/api/translations/en")
-        .then((resp) => {
-          this.$i18n.setLocaleMessage("en", resp.data);
+      fetch("/locales/en.json")
+        .then((r) => r.json())
+        .then((data) => {
+          this.$i18n.setLocaleMessage("en", data);
           this.isLoading = false;
         })
         .catch(() => {
           this.isLoading = false;
         });
       if (locale !== "en") {
-        api.get("/api/translations/" + locale)
-          .then((resp) => {
-            this.$i18n.setLocaleMessage(locale, resp.data);
+        fetch("/locales/" + locale + ".json")
+          .then((r) => r.json())
+          .then((data) => {
+            this.$i18n.setLocaleMessage(locale, data);
           })
           .catch(() => {});
       }
+    },
+    loadLanguages() {
+      fetch("/locales/languages.json")
+        .then((r) => r.json())
+        .then((data) => {
+          this.$store.commit("setLanguages", data);
+        })
+        .catch((e) => console.error("Failed to load languages", e));
     },
     Loaded() {
       this.isLoaded = true;

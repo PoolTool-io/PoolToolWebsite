@@ -1,0 +1,94 @@
+{
+  "ar": {
+    "locale": "ar",
+    "language": "Arabic (اللغة العربية)"
+  },
+  "cs": {
+    "locale": "cs",
+    "language": "Czech (čeština)"
+  },
+  "da": {
+    "locale": "da",
+    "language": "Danish"
+  },
+  "de": {
+    "locale": "de",
+    "language": "German (Deutsch)"
+  },
+  "el": {
+    "locale": "el",
+    "language": "Greek (Ελληνικά)"
+  },
+  "en": {
+    "locale": "en",
+    "language": "English"
+  },
+  "es": {
+    "locale": "es",
+    "language": "Spanish (Español)"
+  },
+  "fr": {
+    "locale": "fr",
+    "language": "French (Français)"
+  },
+  "hr": {
+    "locale": "hr",
+    "language": "Croatian (Hrvatski)"
+  },
+  "hu": {
+    "locale": "hu",
+    "language": "Hungarian (magyar)"
+  },
+  "it": {
+    "locale": "it",
+    "language": "Italian (Italiano)"
+  },
+  "ja": {
+    "locale": "ja",
+    "language": "Japanese (日本語)"
+  },
+  "ko": {
+    "locale": "ko",
+    "language": "Korean (한국어)"
+  },
+  "nl": {
+    "locale": "nl",
+    "language": "Dutch (Nederlands)"
+  },
+  "pl": {
+    "locale": "pl",
+    "language": "Polish (język polski)"
+  },
+  "pt": {
+    "locale": "pt",
+    "language": "Portuguese (Português)"
+  },
+  "ru": {
+    "locale": "ru",
+    "language": "Russian (Русский)"
+  },
+  "sv": {
+    "locale": "sv",
+    "language": "Swedish (svenska)"
+  },
+  "th": {
+    "locale": "th",
+    "language": "Thai (ไทย)"
+  },
+  "tl": {
+    "locale": "tl",
+    "language": "Filipino"
+  },
+  "tr": {
+    "locale": "tr",
+    "language": "Turkish (Türkçe)"
+  },
+  "vn": {
+    "locale": "vn",
+    "language": "Vietnamese (Tiếng Việt)"
+  },
+  "zh": {
+    "locale": "zh",
+    "language": "Chinese (中文)"
+  }
+}

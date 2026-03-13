@@ -117,29 +117,24 @@
 </template>
 
 <script>
-import api from "@/services/api";
 export default {
   props: ["nightmode", "currentGenesis"],
-  async mounted() {
+  mounted() {
     this.$emit("isLoaded", true);
-    try {
-      const { data } = await api.get("/api/languages");
-      this.langs_raw = data || {};
-    } catch (e) {
-      console.error("Failed to fetch languages", e);
-    }
   },
 
   computed: {
     network: function () {
       return this.$store.getters.getNetwork;
     },
-
+    langs_raw: function () {
+      return this.$store.getters.getLanguages;
+    },
     langs: function () {
       var a = [];
       if (typeof this.langs_raw != "undefined" && this.langs_raw != null) {
         for (const value of Object.values(this.langs_raw)) {
-          if (value.disabled == false && value.locale != "en") {
+          if (value.locale != "en") {
             a.push(value);
           }
         }
@@ -149,7 +144,6 @@ export default {
   },
   data() {
     return {
-      langs_raw: {},
       myaddress:
         "addr1q8zpcqqy3vv6eppcc977783d5ulruew986z0c50pnsx63hzkj0r5fg3p7g5ex8argw84z6kc5pp26g9c2fjxy9z6cucqev8774",
       faves2: [],
