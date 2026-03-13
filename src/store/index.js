@@ -459,6 +459,12 @@ export const store = new Vuex.Store({
           commit("setEpochData", data);
         }
       });
+
+      wsClient.subscribe("admin_message", {}, (data) => {
+        if (data != null && typeof data === "object") {
+          state.admin_message = data;
+        }
+      });
     },
 
     updatePools({ commit }, poolsdata) {
