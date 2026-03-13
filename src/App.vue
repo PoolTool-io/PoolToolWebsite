@@ -916,6 +916,18 @@ export default {
         // S3 data files are no longer needed — data comes from API
       }
     },
+    userData: {
+      handler(data) {
+        if (data && data.settings) {
+          if (data.settings.currency) this.currency = data.settings.currency;
+          if (data.settings.locale) {
+            this.locale = data.settings.locale;
+            this.loadTranslations(data.settings.locale);
+          }
+        }
+      },
+      immediate: true,
+    },
   },
 
   mounted() {

@@ -414,9 +414,15 @@ export default {
       return this.$store.getters.getUserData;
     },
     myAddresses: function () {
-      return this.userData != null && this.userData.myAddresses != null
+      const raw = this.userData != null && this.userData.myAddresses != null
         ? this.userData.myAddresses
         : {};
+      const nicknames = (this.userData && this.userData.settings && this.userData.settings.addressNicknames) || {};
+      const out = {};
+      for (const stakeKey of Object.keys(raw)) {
+        out[stakeKey] = { ...raw[stakeKey], nickname: nicknames[stakeKey] || "" };
+      }
+      return out;
     },
     viewepoch: function () {
       return this.$store.getters.getNewRewardsCompleteEpoch;

@@ -293,7 +293,7 @@ export default {
     async savedata(stake_address, val) {
       try {
         await updateUserSettings(this.userId, {
-          privMeta: { myAddresses: { [stake_address]: { nickname: val } } },
+          addressNicknames: { [stake_address]: val },
         });
       } catch (e) {
         console.error("Failed to save address nickname", e);

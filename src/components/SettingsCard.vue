@@ -3,18 +3,6 @@
     <v-card class="mt-6" elevation="5" dark>
       <div class="pt_form_title">{{ $t("app.settings") }}</div>
       <v-card-text class="mt-3 mb-0 pb-0">
-        <v-text-field
-          v-if="isSignedIn"
-          :label="$t('app.profile.nickName')"
-          :value="myNickname"
-          @change="updatePubMeta('nickName', $event)"
-          hide-details
-          dense
-          outlined
-          clearable
-          class="pb-2"
-        ></v-text-field>
-
         <v-select
           dense
           outlined
@@ -25,24 +13,14 @@
           item-value="code"
           :items="currencies"
           item-text="name"
-          @change="$emit('setCurrency', $event)"
+          @change="onCurrencyChange($event)"
         >
         </v-select>
 
         <local-selector-v
-          @loadLocaleMessages="loadLocaleMessages"
+          @loadLocaleMessages="onLocaleChange"
           class="pb-2"
         />
-        <v-text-field
-          v-if="isSignedIn"
-          :label="$t('app.profile.email')"
-          :value="myEmail"
-          @change="updatePrivMeta('myEmail', $event)"
-          hint="Add your patreon email address here so we can link your patreon donations with your account.  Once we see your email address in there we will enable your ad free experience within a few days"
-          dense
-          outlined
-          clearable
-        ></v-text-field>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -76,22 +54,6 @@ export default {
     isSignedIn: function () {
       return this.$store.getters.getIsSignedIn;
     },
-    userDataPub: function () {
-      return this.$store.getters.getUserDataPub;
-    },
-    userDataPriv: function () {
-      return this.$store.getters.getUserDataPriv;
-    },
-    myEmail: function () {
-      return this.userDataPriv != null && this.userDataPriv.myEmail != null
-        ? this.userDataPriv.myEmail
-        : "";
-    },
-    myNickname: function () {
-      return this.userDataPub != null && this.userDataPub.nickName != null
-        ? this.userDataPub.nickName
-        : "";
-    },
     network: function () {
       return this.$store.getters.getNetwork;
     },
@@ -100,21 +62,20 @@ export default {
     },
   },
   methods: {
-    loadLocaleMessages(data) {
-      this.$emit("loadLocaleMessages", data);
-    },
-    async updatePubMeta(item, val) {
-      try {
-        await updateUserSettings(this.userId, { pubMeta: { [item]: val } });
-      } catch (e) {
-        console.error("Failed to update public meta", e);
+    onCurrencyChange(code) {
+      this.$emit("setCurrency", code);
+      if (this.isSignedIn && this.userId) {
+        updateUserSettings(this.userId, { currency: code }).catch((e) =>
+          console.error("Failed to sync currency to account", e)
+        );
       }
     },
-    async updatePrivMeta(item, val) {
-      try {
-        await updateUserSettings(this.userId, { privMeta: { [item]: val } });
-      } catch (e) {
-        console.error("Failed to update private meta", e);
+    onLocaleChange(locale) {
+      this.$emit("loadLocaleMessages", locale);
+      if (this.isSignedIn && this.userId) {
+        updateUserSettings(this.userId, { locale }).catch((e) =>
+          console.error("Failed to sync locale to account", e)
+        );
       }
     },
   },
