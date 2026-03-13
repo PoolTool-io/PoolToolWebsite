@@ -887,11 +887,6 @@ export default {
       }.bind(this),
       10000
     );
-    if ("Notification" in window && "serviceWorker" in navigator) {
-      this.notificationsSupported = true;
-    } else {
-      this.notificationsSupported = false;
-    }
   },
   watch: {
     chillin: {
@@ -943,10 +938,9 @@ export default {
     },
     requestPermission: {
       get: function () {
-        return localStorage.getItem("notificationPref") === null;
+        return false;
       },
-      set: function (value) {
-        localStorage.setItem("notificationPref", value);
+      set: function () {
       },
     },
 
@@ -1066,26 +1060,6 @@ export default {
       this.currency = currency;
     },
 
-    enableNotifications: function () {
-      return;
-      // if (!("Notification" in window)) {
-      //   console.log("Notifications are not supported");
-      // } else if (Notification.permission === "granted") {
-      //   this.initializeFirebase();
-      // } else if (Notification.permission !== "denied") {
-      //   Notification.requestPermission().then((permission) => {
-      //     if (permission === "granted") {
-      //       this.initializeFirebase();
-      //     }
-      //   });
-      // } else {
-      //   console.log("No permission to send notification");
-      // }
-      // this.requestPermission = Notification.permission;
-    },
-    initializeFirebase: function () {
-      // Firebase messaging removed — notifications via Telegram bot
-    },
     processCheckResetStatus: function (response) {
       if ("status" in response) {
         if (response.status === "completed") {
@@ -1371,8 +1345,6 @@ export default {
       reloadPoolTool: false,
       address: null,
       showNumberOne: true,
-      notificationsSupported: false,
-      showNotificationAlertBox: false,
       publicPath: process.env.BASE_URL,
 
       rules: {

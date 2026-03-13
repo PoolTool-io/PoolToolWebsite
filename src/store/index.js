@@ -213,7 +213,7 @@ export const store = new Vuex.Store({
     rewardsnp1: {},
     rewardstake: {},
     activestake: {},
-    // Legacy Firebase sync flags (no longer written to; kept for backward compat)
+    // Legacy sync flags (kept for backward compat)
     mary_db_sync_status_new_rewards_complete_epoch: 0,
     heights: {},
     admin_message: { chillin: false, message: "", title: "" },

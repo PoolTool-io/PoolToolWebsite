@@ -135,9 +135,6 @@ const Buffer = require("buffer/").Buffer;
 import { getUser, updateUserSettings } from "@/services/api";
 let { bech32 } = require("bech32");
 export default {
-  // firebase: {
-  //     addr2user: db.ref('Mainnet/users/addr2user'),
-  // },
   props: ["nightmode"],
   computed: {
     noPasswordHash: function () {
