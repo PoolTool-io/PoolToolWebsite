@@ -1,12 +1,19 @@
 /**
  * Central API client for the PoolTool 2026 backend.
  * REST and WebSocket contracts follow docs/FRONTEND_API_SPEC.md.
- * API host is hardcoded to 34.209.51.89:3004.
+ * Set VUE_APP_API_URL at build time for production (e.g. https://api.pooltool.io).
+ * If unset, uses same host as the page on port 3004.
  */
 import axios from "axios";
 
-const API_HOST = "34.209.51.89:3004";
-const API_BASE = `http://${API_HOST}`;
+function getApiBase() {
+  if (process.env.VUE_APP_API_URL) return process.env.VUE_APP_API_URL;
+  if (typeof window !== "undefined")
+    return `http://${window.location.hostname}:3004`;
+  return "http://localhost:3004";
+}
+
+const API_BASE = getApiBase();
 
 const api = axios.create({
   baseURL: API_BASE,

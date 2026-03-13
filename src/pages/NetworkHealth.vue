@@ -399,6 +399,7 @@ import { preference } from "vue-preferences";
 import pooltable from "@/mixins/pooltable";
 import healthhelp from "@/mixins/healthhelp";
 import colors from "@/mixins/colors";
+import api from "@/services/api";
 const favoritepools = preference("fav_mainnet_pools", {
   defaultValue: [],
 });
@@ -874,7 +875,7 @@ export default {
           "https://s3-us-west-2.amazonaws.com/data.pooltool.io/stats/tickers2026.json?t=" +
           Date.now();
         const apiUrl =
-          "http://34.209.51.89:3004/api/tickers2026?t=" + Date.now();
+          api.defaults.baseURL + "/api/tickers2026?t=" + Date.now();
         this.getJSON(s3Url, function (err, thisdata) {
           if (err == null && thisdata && thisdata.tickers) {
             self.tickers = thisdata.tickers;

@@ -1,6 +1,8 @@
 /**
  * WebSocket client for real-time data from the PoolTool 2026 backend.
- * Implements docs/FRONTEND_API_SPEC.md §3. WS URL hardcoded to 34.209.51.89:3004.
+ * Implements docs/FRONTEND_API_SPEC.md §3.
+ * Set VUE_APP_WS_URL at build time for production (e.g. wss://api.pooltool.io/ws).
+ * If unset, uses same host as the page on port 3004.
  */
 
 const WS_DEBUG = typeof process !== "undefined" && process.env.NODE_ENV === "development";
@@ -11,8 +13,14 @@ function isWsDebug() {
   return false;
 }
 
-const API_HOST = "34.209.51.89:3004";
-const WS_URL = `ws://${API_HOST}/ws`;
+function getWsUrl() {
+  if (process.env.VUE_APP_WS_URL) return process.env.VUE_APP_WS_URL;
+  if (typeof window !== "undefined")
+    return `ws://${window.location.hostname}:3004/ws`;
+  return "ws://localhost:3004/ws";
+}
+
+const WS_URL = getWsUrl();
 
 class PoolToolWS {
   constructor() {
