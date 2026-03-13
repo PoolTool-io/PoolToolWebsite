@@ -13,6 +13,7 @@ import {
   getEpoch,
   getActiveStake,
   getUser,
+  updateUserSettings,
 } from "@/services/api";
 
 Vue.use(Vuex);
@@ -241,6 +242,34 @@ export const store = new Vuex.Store({
         commit("setUserData", data);
         commit("setUserDataPub", data);
         commit("setUserDataPriv", data);
+
+        // Seed: merge localStorage favorites into server, then sync back.
+        // This preserves old-version favorites that only lived in localStorage.
+        try {
+          const localPoolFavs = JSON.parse(localStorage.getItem("vue-preferences:fav_mainnet_pools") || "[]");
+          const localAddrFavs = JSON.parse(localStorage.getItem("vue-preferences:favoriteaddr") || "[]");
+          const serverPoolFavs = data.favorites || [];
+          const serverAddrFavs = data.favoriteAddresses || [];
+
+          const mergedPools = [...new Set([...serverPoolFavs, ...localPoolFavs])];
+          const mergedAddrs = [...new Set([...serverAddrFavs, ...localAddrFavs])];
+
+          const poolsChanged = mergedPools.length !== serverPoolFavs.length;
+          const addrsChanged = mergedAddrs.length !== serverAddrFavs.length;
+
+          if (poolsChanged || addrsChanged) {
+            const payload = {};
+            if (poolsChanged) payload.favorites = mergedPools;
+            if (addrsChanged) payload.favorite_addresses = mergedAddrs;
+            await updateUserSettings(state.userId, null, null, payload);
+          }
+
+          // Write merged lists back to localStorage so every component sees them
+          localStorage.setItem("vue-preferences:fav_mainnet_pools", JSON.stringify(mergedPools));
+          localStorage.setItem("vue-preferences:favoriteaddr", JSON.stringify(mergedAddrs));
+        } catch (seedErr) {
+          console.warn("Failed to seed favorites:", seedErr);
+        }
       } catch (e) {
         console.warn("Failed to load user data:", e);
       }

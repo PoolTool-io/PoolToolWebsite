@@ -789,7 +789,7 @@ import add from "date-fns/add";
 import parseISO from "date-fns/parseISO";
 import format from "date-fns/format";
 const Buffer = require("buffer/").Buffer;
-import { getExchangeRates, getStakeHist, pivotRewards } from "@/services/api";
+import { getExchangeRates, getStakeHist, pivotRewards, updateUserSettings } from "@/services/api";
 import { wsClient } from "@/services/ws";
 
 import numeral from "numeral";
@@ -898,6 +898,12 @@ export default {
         this.favorites.splice(indx, 1);
       }
       favoriteaddrs.set(this.favorites);
+
+      const userId = this.$store && this.$store.state.userId;
+      if (userId) {
+        updateUserSettings(userId, null, null, { favorite_addresses: [...this.favorites] })
+          .catch(e => console.warn('Failed to sync address favorite', e));
+      }
     },
     cur_rate: function (item) {
       if (

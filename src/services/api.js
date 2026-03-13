@@ -72,8 +72,10 @@ export function getUser(userId) {
   return api.get(`/api/user/${userId}`);
 }
 
-export function updateUserSettings(userId, settings, favorites) {
-  return api.put(`/api/user/${userId}/settings`, { settings, favorites });
+export function updateUserSettings(userId, settings, favorites, extra) {
+  const body = { settings, favorites };
+  if (extra) Object.assign(body, extra);
+  return api.put(`/api/user/${userId}/settings`, body);
 }
 
 export function addFavorite(userId, poolId) {

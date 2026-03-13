@@ -154,7 +154,7 @@
 </template>
 <script>
 import numeral from "numeral";
-import { pivotRewards, getStakeHist, getRosHistogram } from "@/services/api";
+import { pivotRewards, getStakeHist, getRosHistogram, updateUserSettings } from "@/services/api";
 import pooltable from "@/mixins/pooltable";
 import poolfavorites from "@/mixins/poolfavorites";
 import GenesisBar from "@/components/GenesisBar";
@@ -310,6 +310,12 @@ export default {
       }
 
       favoriteaddr.set(this.favoriteaddrs);
+
+      const userId = this.$store && this.$store.state.userId;
+      if (userId) {
+        updateUserSettings(userId, null, null, { favorite_addresses: [...this.favoriteaddrs] })
+          .catch(e => console.warn('Failed to sync address favorite', e));
+      }
     },
 
     bindHistogramData: async function () {
