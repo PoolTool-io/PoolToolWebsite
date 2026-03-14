@@ -21,7 +21,7 @@
               <v-list-item-subtitle>
                 Send <strong class="warning--text">{{ (v.payment_amount / 1000000).toFixed(6) }} ADA</strong>
                 to <span style="font-family:monospace" class="text-caption">{{ v.payment_address | ellipsiscrypto(22) }}</span>
-                &nbsp;·&nbsp; Requested {{ v.created_at | date("MMM Do, h:mm a") }}
+                &nbsp;·&nbsp; Requested {{ v.created_at | date("MMM do, h:mm a") }}
                 &nbsp;·&nbsp; user: <span style="font-family:monospace">{{ v.user_id | ellipsiscrypto(12) }}</span>
               </v-list-item-subtitle>
             </v-list-item-content>
@@ -56,7 +56,7 @@
               <v-list-item-subtitle>
                 Send <strong class="orange--text">{{ (r.payment_amount / 1000000).toFixed(6) }} ADA</strong>
                 to <span style="font-family:monospace" class="text-caption">{{ r.payment_address | ellipsiscrypto(22) }}</span>
-                &nbsp;·&nbsp; Requested {{ r.created_at | date("MMM Do, h:mm a") }}
+                &nbsp;·&nbsp; Requested {{ r.created_at | date("MMM do, h:mm a") }}
               </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
@@ -101,7 +101,7 @@
             </v-chip>
           </template>
           <template #[`item.created_at`]="{ item }">
-            <span class="text-caption">{{ item.created_at | date("MMM Do, HH:mm") }}</span>
+            <span class="text-caption">{{ item.created_at | date("MMM do, HH:mm") }}</span>
           </template>
           <template #[`item.tx_hash`]="{ item }">
             <span v-if="item.tx_hash" style="font-family:monospace" class="text-caption">{{ item.tx_hash.substring(0, 12) }}...</span>
@@ -128,7 +128,7 @@
               </v-list-item-title>
               <v-list-item-subtitle>
                 <v-icon x-small color="success">mdi-check-circle</v-icon>
-                Verified {{ v.verified_at | date("MMM Do, h:mm a") }}
+                Verified {{ v.verified_at | date("MMM do, h:mm a") }}
                 &nbsp;·&nbsp; Sent {{ (v.payment_amount / 1000000).toFixed(6) }} ADA
               </v-list-item-subtitle>
             </v-list-item-content>
@@ -151,7 +151,7 @@
             <v-list-item-content>
               <v-list-item-title class="text-caption" style="font-family:monospace">{{ r.stake_key | ellipsiscrypto(36) }}</v-list-item-title>
               <v-list-item-subtitle>
-                Completed {{ r.completed_at | date("MMM Do, h:mm a") }}
+                Completed {{ r.completed_at | date("MMM do, h:mm a") }}
               </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>

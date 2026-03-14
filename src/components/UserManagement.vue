@@ -36,7 +36,7 @@
             <v-btn x-small icon v-clipboard="user.user_id"><v-icon x-small>mdi-content-copy</v-icon></v-btn>
           </div>
           <div class="text-caption text--secondary">Created</div>
-          <div class="text-body-2 mb-3">{{ user.created_at | date("MMMM Do yyyy, h:mm a") }}</div>
+          <div class="text-body-2 mb-3">{{ user.created_at | date("MMMM do yyyy, h:mm a") }}</div>
 
           <v-divider class="mb-3" />
           <div class="d-flex align-center">
@@ -76,7 +76,7 @@
                 <v-list-item-subtitle>
                   <span v-if="addr.verified" class="success--text">
                     <v-icon x-small color="success">mdi-check-circle</v-icon>
-                    Verified {{ addr.verified_at | date("MMM Do yyyy") }}
+                    Verified {{ addr.verified_at | date("MMM do yyyy") }}
                   </span>
                   <span v-else class="warning--text">
                     <v-icon x-small color="warning">mdi-clock-outline</v-icon>
@@ -125,7 +125,7 @@
                 <v-list-item-subtitle>
                   Send <strong>{{ (v.payment_amount / 1000000).toFixed(6) }} ADA</strong>
                   to <span style="font-family:monospace">{{ v.payment_address | ellipsiscrypto(20) }}</span>
-                  &nbsp;·&nbsp; Created {{ v.created_at | date("MMM Do yyyy, h:mm a") }}
+                  &nbsp;·&nbsp; Created {{ v.created_at | date("MMM do yyyy, h:mm a") }}
                 </v-list-item-subtitle>
               </v-list-item-content>
               <v-list-item-action>
@@ -151,7 +151,7 @@
                 <v-list-item-title class="text-caption" style="font-family:monospace">{{ r.stake_key }}</v-list-item-title>
                 <v-list-item-subtitle>
                   Status: <strong :class="r.status === 'completed' ? 'success--text' : 'warning--text'">{{ r.status }}</strong>
-                  &nbsp;·&nbsp; {{ r.created_at | date("MMM Do yyyy, h:mm a") }}
+                  &nbsp;·&nbsp; {{ r.created_at | date("MMM do yyyy, h:mm a") }}
                 </v-list-item-subtitle>
               </v-list-item-content>
             </v-list-item>
