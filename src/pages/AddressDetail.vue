@@ -276,7 +276,8 @@
         </template>
 
         <template #[`item.delegatedTo`]="{ item }">
-          <span class="text-no-wrap">
+          <v-progress-circular v-if="item._loading" indeterminate size="16" width="2" color="grey" />
+          <span v-else class="text-no-wrap">
             {{ item.delegatedToTicker }}
             <v-tooltip v-if="item.delegatedTo.trim() != 'None'" bottom>
               <template v-slot:activator="{ on, attrs }">
@@ -342,17 +343,19 @@
           </span>
         </template>
         <template #[`item.amount`]="{ item }">
-          {{ item.amount | toada | numFormat("0,0.000a") | zeronull }}
+          <v-progress-circular v-if="item._loading" indeterminate size="16" width="2" color="grey" />
+          <span v-else>{{ item.amount | toada | numFormat("0,0.000a") | zeronull }}</span>
         </template>
 
         <template #[`item.stakeRewards`]="{ item }">
+          <v-progress-circular v-if="item._loading" indeterminate size="16" width="2" color="grey" />
           <span
             :class="
               item.rewardsSentTo != $route.params.address
                 ? 'text--disabled'
                 : ''
             "
-            v-if="!item.pending"
+            v-else-if="!item.pending"
           >
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
@@ -1034,6 +1037,8 @@ export default {
       showAlert: false,
       rewardsUpdating: false,
       rewardsUpdateMessage: "",
+      metaCurrentEpoch: 0,
+      metaProcessedThrough: 0,
     };
   },
   computed: {
@@ -1659,8 +1664,34 @@ export default {
     },
     ahist: function () {
       var a = [];
+      var existingEpochs = new Set();
       for (let i in this.stake_hist) {
         a.push(this.buildEpochData(this.stake_hist[i], i));
+        existingEpochs.add(Number(i));
+      }
+      if (this.rewardsUpdating && this.metaCurrentEpoch > 0) {
+        var start = (this.metaProcessedThrough || 0) + 1;
+        for (var ep = start; ep <= this.metaCurrentEpoch; ep++) {
+          if (!existingEpochs.has(ep)) {
+            a.push({
+              epoch: ep,
+              amount: null,
+              delegatedTo: "",
+              delegatedToTicker: null,
+              pending: true,
+              _loading: true,
+              operatorRewards: null,
+              stakeRewards: null,
+              rewardsSentTo: null,
+              lifeAmount: null,
+              lifeOperatorRewards: null,
+              lifeStakeRewards: null,
+              rewardDate: null,
+              adaPrices: null,
+              addr_history: [],
+            });
+          }
+        }
       }
       return a;
     },
@@ -1693,26 +1724,29 @@ export default {
                 this.stake_hist = data || {};
               }
               this.rewardsUpdating = false;
+              this.metaCurrentEpoch = 0;
+              this.metaProcessedThrough = 0;
             }
           );
           try {
             const { data: meta } = await getStakeHistMeta(address);
-            if (meta && (meta.status === "ready" || meta.status === "building") && meta.url) {
-              if (meta.status === "building") {
+            if (meta) {
+              if (meta.currentEpoch) this.metaCurrentEpoch = meta.currentEpoch;
+              if (meta.processedThrough != null) this.metaProcessedThrough = meta.processedThrough;
+              if (meta.building) {
                 this.rewardsUpdating = true;
                 this.rewardsUpdateMessage = "Building rewards data…";
               }
-              try {
-                const { data: pivoted } = await fetchStakeHistFromS3(meta.url);
-                if (pivoted && Object.keys(pivoted).length) {
-                  this.stake_hist = pivoted;
+              if (meta.url) {
+                try {
+                  const { data: pivoted } = await fetchStakeHistFromS3(meta.url);
+                  if (pivoted && Object.keys(pivoted).length) {
+                    this.stake_hist = pivoted;
+                  }
+                } catch (e) {
+                  console.error("S3 fetch failed, may not exist yet", e);
                 }
-              } catch (e) {
-                console.error("S3 fetch failed, may not exist yet", e);
               }
-            } else if (meta && meta.status === "building") {
-              this.rewardsUpdating = true;
-              this.rewardsUpdateMessage = "Building rewards data…";
             }
           } catch (e) {
             console.error("Failed to fetch stake hist meta", e);
