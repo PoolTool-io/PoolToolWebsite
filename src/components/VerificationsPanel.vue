@@ -83,27 +83,27 @@
           class="elevation-0"
           style="background:transparent"
         >
-          <template v-slot:item.amount="{ item }">
+          <template #[`item.amount`]="{ item }">
             {{ (item.amount / 1000000).toFixed(6) }} ADA
           </template>
-          <template v-slot:item.to_address="{ item }">
+          <template #[`item.to_address`]="{ item }">
             <span style="font-family:monospace" class="text-caption">{{ item.to_address | ellipsiscrypto(20) }}</span>
           </template>
-          <template v-slot:item.from_stake_keys="{ item }">
+          <template #[`item.from_stake_keys`]="{ item }">
             <span v-if="item.from_stake_keys && item.from_stake_keys.length" style="font-family:monospace" class="text-caption">
               {{ item.from_stake_keys[0] | ellipsiscrypto(20) }}
             </span>
             <span v-else class="text--secondary">—</span>
           </template>
-          <template v-slot:item.processed="{ item }">
+          <template #[`item.processed`]="{ item }">
             <v-chip x-small :color="item.processed ? 'success' : (item.matched_type ? 'blue' : 'grey darken-1')">
               {{ item.processed ? 'matched' : (item.matched_type || 'unmatched') }}
             </v-chip>
           </template>
-          <template v-slot:item.created_at="{ item }">
+          <template #[`item.created_at`]="{ item }">
             <span class="text-caption">{{ item.created_at | date("MMM Do, HH:mm") }}</span>
           </template>
-          <template v-slot:item.tx_hash="{ item }">
+          <template #[`item.tx_hash`]="{ item }">
             <span v-if="item.tx_hash" style="font-family:monospace" class="text-caption">{{ item.tx_hash.substring(0, 12) }}...</span>
             <span v-else class="text--secondary">—</span>
           </template>
