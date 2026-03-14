@@ -189,7 +189,8 @@ export function pivotRewards(stakeKeys) {
  * Returns { data: { "epoch": { ...pivotFields }, ... } } to match old getStakeHist shape.
  */
 export async function fetchStakeHistFromS3(s3Url) {
-  const resp = await fetch(s3Url);
+  const bustUrl = s3Url + (s3Url.includes("?") ? "&" : "?") + "_t=" + Date.now();
+  const resp = await fetch(bustUrl);
   if (!resp.ok) return { data: {} };
   const raw = await resp.json();
   return { data: computePivot(raw) };
@@ -200,7 +201,8 @@ export async function fetchStakeHistFromS3(s3Url) {
  * Much lighter than fetching + pivoting the full history.
  */
 export async function fetchStakeHistEpoch(s3Url, epoch) {
-  const resp = await fetch(s3Url);
+  const bustUrl = s3Url + (s3Url.includes("?") ? "&" : "?") + "_t=" + Date.now();
+  const resp = await fetch(bustUrl);
   if (!resp.ok) return null;
   const raw = await resp.json();
   const entry = raw[String(epoch)];
