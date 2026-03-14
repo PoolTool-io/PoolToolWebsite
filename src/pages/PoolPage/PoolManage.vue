@@ -51,12 +51,25 @@
             {{ $t("app.profile.apiKey") }}
           </div>
           <v-card-text>
-            {{ $t("app.profile.apiKey") }}:
-            <ul>
-              <li v-for="(apikey, id) in userData.myApiKeys" :key="id">
-                {{ id }}
-              </li>
-            </ul>
+            <div v-if="userData.myApiKeys && Object.keys(userData.myApiKeys).length > 0">
+              <v-list-item
+                v-for="(val, key) in userData.myApiKeys"
+                :key="key"
+                class="pl-0"
+              >
+                <v-list-item-content>
+                  <v-list-item-title class="text-body-2 font-weight-medium" style="font-family: monospace;">
+                    {{ key }}
+                  </v-list-item-title>
+                </v-list-item-content>
+                <v-list-item-action>
+                  <v-btn text x-small icon v-clipboard="key" title="Copy API key">
+                    <v-icon x-small>mdi-content-copy</v-icon>
+                  </v-btn>
+                </v-list-item-action>
+              </v-list-item>
+            </div>
+            <div v-else class="text--secondary text-body-2">No API key assigned.</div>
           </v-card-text>
         </v-card>
       </v-col></v-row
@@ -67,15 +80,7 @@
       </div>
       <v-card-text>
         <v-row>
-          <v-col cols="12" sm="12" md="12" lg="12" class="float-right">
-            <p>
-              {{ $t("app.poolManage.postANoteToYourPage") }}
-              <b>{{ poolstats.ptbs }}</b>
-              <a href="https://web.telegram.org/#/im?p=@PoolToolBot"
-                >@PoolToolBot</a
-              >
-              {{ $t("app.poolManage.followers") }}
-            </p>
+          <v-col cols="12" sm="12" md="12" lg="12">
             <v-row>
               <v-col>
                 <v-textarea
@@ -124,47 +129,6 @@
                             @click="updatePoolField('public_note', '')"
                           >
                             <v-icon>mdi-cancel</v-icon>
-                          </v-btn>
-                        </v-col>
-                      </v-row>
-                    </v-container>
-                  </template>
-                </v-textarea>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col>
-                <v-textarea
-                  disabled
-                  outlined
-                  auto-grow
-                  persistent-hint
-                  :hint="
-                    'TEMPORARILY DISABLED FEATURE. ' +
-                    $t('app.poolManage.useThisToSendAMessage') +
-                    '.  ' +
-                    $t('app.poolManage.youMayUseItForAnything') +
-                    '.  ' +
-                    $t('app.poolManage.1024CharactersMax') +
-                    '.  ' +
-                    $t('app.poolManage.noHTML')
-                  "
-                  counter
-                  :label="$t('app.poolManage.telegramAnnouncement')"
-                  :rules="[(v) => v.length <= 1024 || 'Max 1024 characters']"
-                  v-model="localnote"
-                >
-                  <template v-slot:append-outer>
-                    <v-container class="ma-0 pa-0">
-                      <v-row class="ma-0 pa-0">
-                        <v-col cols="12" class="ma-0 pa-0">
-                          <v-btn
-                            disabled
-                            icon
-                            color="success"
-                            @click="sendTelegramMessage(localnote)"
-                          >
-                            <v-icon>mdi-send</v-icon>
                           </v-btn>
                         </v-col>
                       </v-row>
@@ -375,7 +339,6 @@ export default {
       ready_pools: {},
       messages: {},
       messageForm: "",
-      localnote: "",
       tempnote: this.poolstats.public_note,
       saved_metadata: [],
       metadata: {
@@ -509,18 +472,6 @@ export default {
         //     this.newName = null
         // })
       }
-    },
-    sendTelegramMessage: function (note) {
-      console.log(note);
-      // const mstring = "mutation sendTelegramMessage($owner_id: uuid! , $pool_id: String!, $message: String! ) { sendTelegramMessage(owner_id: $owner_id, pool_id: $pool_id, message: $message) { success  } }"
-      // this.$apollo.mutate({
-      //     mutation: gql `${mstring}`,
-      //     variables: {
-      //         "message": note,
-      //         "owner_id": this.userId,
-      //         "pool_id": this.pool.poolpubkey
-      //     }
-      // })
     },
     addPoolNode: function () {
       if (this.createPNodeValid) {
