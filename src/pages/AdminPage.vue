@@ -8,6 +8,7 @@
       grow
     >
       <v-tab> Users </v-tab>
+      <v-tab> Verifications </v-tab>
       <v-tab> Web Admin Message </v-tab>
       <v-tab> App Admin Message </v-tab>
     </v-tabs>
@@ -15,6 +16,9 @@
     <v-tabs-items v-model="tab" dark style="background-color: #070f28">
       <v-tab-item>
         <UserManagement :nightmode="false" />
+      </v-tab-item>
+      <v-tab-item>
+        <VerificationsPanel />
       </v-tab-item>
       <v-tab-item>
         <p>Set note on web front page</p>
@@ -101,6 +105,7 @@ import api from "@/services/api";
 export default {
   components: {
     UserManagement: () => import("@/components/UserManagement"),
+    VerificationsPanel: () => import("@/components/VerificationsPanel"),
   },
   props: [],
   data() {
