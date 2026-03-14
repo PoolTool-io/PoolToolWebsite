@@ -789,7 +789,7 @@ import add from "date-fns/add";
 import parseISO from "date-fns/parseISO";
 import format from "date-fns/format";
 const Buffer = require("buffer/").Buffer;
-import { getExchangeRates, getStakeHist, pivotRewards, updateUserSettings } from "@/services/api";
+import { getExchangeRates, getStakeHistMeta, fetchStakeHistFromS3, updateUserSettings } from "@/services/api";
 import { wsClient } from "@/services/ws";
 
 import numeral from "numeral";
@@ -1677,32 +1677,45 @@ export default {
           /[a-f0-9]{56}/gim.test(this.$route.params.address)
         ) {
           const address = this.$route.params.address;
-          // Subscribe to stake_hist so we receive pivot results via WebSocket
           wsClient.connect();
           wsClient.subscribe(
             "stake_hist",
             { address },
-            (data) => {
-              this.stake_hist = data || {};
+            async (data) => {
+              if (data && data.status === "ready" && data.url) {
+                try {
+                  const { data: pivoted } = await fetchStakeHistFromS3(data.url);
+                  this.stake_hist = pivoted || {};
+                } catch (e) {
+                  console.error("Failed to fetch S3 stake history after WS update", e);
+                }
+              } else if (data && !data.status) {
+                this.stake_hist = data || {};
+              }
               this.rewardsUpdating = false;
             }
           );
           try {
-            const { data: pivotRes } = await pivotRewards(address);
-            if (pivotRes && pivotRes.status === "processing") {
+            const { data: meta } = await getStakeHistMeta(address);
+            if (meta && (meta.status === "ready" || meta.status === "building") && meta.url) {
+              if (meta.status === "building") {
+                this.rewardsUpdating = true;
+                this.rewardsUpdateMessage = "Building rewards data…";
+              }
+              try {
+                const { data: pivoted } = await fetchStakeHistFromS3(meta.url);
+                if (pivoted && Object.keys(pivoted).length) {
+                  this.stake_hist = pivoted;
+                }
+              } catch (e) {
+                console.error("S3 fetch failed, may not exist yet", e);
+              }
+            } else if (meta && meta.status === "building") {
               this.rewardsUpdating = true;
-              this.rewardsUpdateMessage =
-                pivotRes.message ||
-                "Results will be pushed via WebSocket when ready.";
+              this.rewardsUpdateMessage = "Building rewards data…";
             }
           } catch (e) {
-            console.error("Failed to trigger pivotRewards", e);
-          }
-          try {
-            const { data } = await getStakeHist(address);
-            this.stake_hist = data || {};
-          } catch (e) {
-            console.error("Failed to fetch stake history", e);
+            console.error("Failed to fetch stake hist meta", e);
           }
         }
       },

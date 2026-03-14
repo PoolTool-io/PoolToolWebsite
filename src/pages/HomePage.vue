@@ -154,7 +154,7 @@
 </template>
 <script>
 import numeral from "numeral";
-import { pivotRewards, getStakeHist, getRosHistogram, updateUserSettings } from "@/services/api";
+import { pivotRewards, getStakeHistMeta, fetchStakeHistEpoch, getRosHistogram, updateUserSettings } from "@/services/api";
 import pooltable from "@/mixins/pooltable";
 import poolfavorites from "@/mixins/poolfavorites";
 import GenesisBar from "@/components/GenesisBar";
@@ -248,11 +248,13 @@ export default {
               epoch: this.viewepoch,
             });
             try {
-              const { data } = await getStakeHist(address);
-              var aitem = (data && data[this.viewepoch]) ? data[this.viewepoch] : {};
-              aitem["stake_address"] = address;
-              aitem["epoch"] = this.viewepoch;
-              this.$set(this.livedatafaves, String(address), aitem);
+              const { data: meta } = await getStakeHistMeta(address);
+              if (meta && meta.url) {
+                const aitem = await fetchStakeHistEpoch(meta.url, this.viewepoch) || {};
+                aitem["stake_address"] = address;
+                aitem["epoch"] = this.viewepoch;
+                this.$set(this.livedatafaves, String(address), aitem);
+              }
             } catch (e) {
               console.error("Failed to fetch stake hist for", address, e);
             }
@@ -279,12 +281,14 @@ export default {
             epoch: this.viewepoch,
           });
           try {
-            const { data } = await getStakeHist(address);
-            var aitem = (data && data[this.viewepoch]) ? data[this.viewepoch] : {};
-            aitem["nickname"] = this.myAddresses[address].nickname;
-            aitem["stake_address"] = address;
-            aitem["epoch"] = this.viewepoch;
-            this.$set(this.livedatamy, String(address), aitem);
+            const { data: meta } = await getStakeHistMeta(address);
+            if (meta && meta.url) {
+              const aitem = await fetchStakeHistEpoch(meta.url, this.viewepoch) || {};
+              aitem["nickname"] = this.myAddresses[address].nickname;
+              aitem["stake_address"] = address;
+              aitem["epoch"] = this.viewepoch;
+              this.$set(this.livedatamy, String(address), aitem);
+            }
           } catch (e) {
             console.error("Failed to fetch stake hist for", address, e);
           }

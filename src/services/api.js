@@ -174,15 +174,88 @@ export function getLanguages() {
 }
 
 // ── Rewards / stake ───────────────────────────────────
-// pivotRewards: max 5 keys per spec §2.5
 
-export function getStakeHist(address) {
-  return api.get(`/api/stake_hist/${address}`);
+export function getStakeHistMeta(address) {
+  return api.get(`/api/stake_hist_meta/${address}`);
 }
 
 export function pivotRewards(stakeKeys) {
   const keys = Array.isArray(stakeKeys) ? stakeKeys : [stakeKeys];
   return api.post("/api/pivotrewards", { stake_keys: keys.slice(0, 5) });
+}
+
+/**
+ * Fetch raw stake history JSON directly from S3 and compute pivot client-side.
+ * Returns { data: { "epoch": { ...pivotFields }, ... } } to match old getStakeHist shape.
+ */
+export async function fetchStakeHistFromS3(s3Url) {
+  const resp = await fetch(s3Url);
+  if (!resp.ok) return { data: {} };
+  const raw = await resp.json();
+  return { data: computePivot(raw) };
+}
+
+/**
+ * Fetch raw stake history from S3 and return ONLY the entry for the given epoch.
+ * Much lighter than fetching + pivoting the full history.
+ */
+export async function fetchStakeHistEpoch(s3Url, epoch) {
+  const resp = await fetch(s3Url);
+  if (!resp.ok) return null;
+  const raw = await resp.json();
+  const entry = raw[String(epoch)];
+  if (!entry) return null;
+  return {
+    amount: entry.amount || 0,
+    delegatedTo: entry.delegated_to_pool || "None",
+    delegatedToTicker: entry.delegated_to_ticker || null,
+    operatorRewards: entry.operator_rewards || 0,
+    stakeRewards: entry.stake_rewards || 0,
+    pending: entry.pending != null ? entry.pending : (entry.forecast || false),
+    rewardsSentTo: entry.rewards_sent_to || null,
+    rewardAddrDetails: entry.reward_address_details || {},
+  };
+}
+
+function computePivot(raw) {
+  const epochs = Object.keys(raw)
+    .filter((k) => /^\d+$/.test(k))
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  let lifeAmount = 0;
+  let lifeOp = 0;
+  let lifeStake = 0;
+  let epochsStaked = 0;
+  const result = {};
+
+  for (const ep of epochs) {
+    const r = raw[String(ep)];
+    const amount = r.amount || 0;
+    const opRew = r.operator_rewards || 0;
+    const stRew = r.stake_rewards || 0;
+    lifeAmount += amount;
+    lifeOp += opRew;
+    lifeStake += stRew;
+    if (amount > 0) epochsStaked++;
+
+    result[String(ep)] = {
+      delegatedTo: r.delegated_to_pool || "None",
+      delegatedToTicker: r.delegated_to_ticker || null,
+      amount: amount,
+      forecast: r.forecast || false,
+      pending: r.pending != null ? r.pending : (r.forecast || false),
+      lifeAmount: lifeAmount,
+      lifeOperatorRewards: lifeOp,
+      lifeStakeRewards: lifeStake,
+      operatorRewards: opRew,
+      stakeRewards: stRew,
+      rewardsSentTo: r.rewards_sent_to || null,
+      rewardAddrDetails: r.reward_address_details || {},
+      epochsStaked: epochsStaked,
+    };
+  }
+  return result;
 }
 
 // ── ROS Histograms ───────────────────────────────────
