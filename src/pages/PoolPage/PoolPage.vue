@@ -78,6 +78,7 @@
 
 <script>
 import { getPool } from "@/services/api";
+import { wsClient } from "@/services/ws";
 import pooltable from "@/mixins/pooltable";
 export default {
   props: [
@@ -177,7 +178,7 @@ export default {
         selected_pool["lifetimeStake"] = selected_pool.lifetime_stake ?? 0;
         selected_pool["lifetimeTax"] = selected_pool.lifetime_tax ?? 0;
         selected_pool["lifetimeRewards"] = selected_pool.lifetime_rewards ?? 0;
-        selected_pool["roifcp1"] = selected_pool.epoch_ros ?? 0;
+        selected_pool["roifcp1"] = selected_pool.prev_epoch_ros ?? 0;
         selected_pool["fcp1EpochTax"] = 0;
         selected_pool["fcp1EpochRewards"] = 0;
 
@@ -294,8 +295,31 @@ export default {
       }
     },
   },
-  async created() {},
-  beforeDestroy() {},
-  methods: {},
+  async created() {
+    this._subscribePoolStats(this.$route.params.poolid);
+  },
+  beforeDestroy() {
+    this._unsubscribePoolStats(this._subscribedPoolId);
+  },
+  methods: {
+    _subscribePoolStats(poolId) {
+      if (!poolId) return;
+      this._subscribedPoolId = poolId;
+      wsClient.subscribe("pool_stats", { pool_id: poolId }, (data) => {
+        if (data && data.public_note !== undefined) {
+          this.poolstats = { ...this.poolstats, ...{
+            public_note: data.public_note,
+            description: data.description ?? this.poolstats.description,
+            homePage: data.homePage ?? this.poolstats.homePage,
+            metadataHash: data.metadata_hash ?? this.poolstats.metadataHash,
+            metadataUrl: data.metadata ?? this.poolstats.metadataUrl,
+          }};
+        }
+      });
+    },
+    _unsubscribePoolStats(poolId) {
+      if (poolId) wsClient.unsubscribe("pool_stats", { pool_id: poolId });
+    },
+  },
 };
 </script>

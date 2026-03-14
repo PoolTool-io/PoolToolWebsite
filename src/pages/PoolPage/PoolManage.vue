@@ -579,12 +579,14 @@ export default {
     },
     async updatePoolField(field, newvalue) {
       var w = {};
-      if (field == "public_note" && newvalue == "") {
-        this.tempnote = "";
-      }
       w[field] = newvalue;
       try {
         await api.put(`/api/pool/${this.pool.pool_id}/stats`, w);
+        // Optimistically update local state so the change is visible immediately
+        if (field == "public_note") {
+          this.tempnote = newvalue;
+          this.$emit("pool-stats-updated", { public_note: newvalue });
+        }
       } catch (e) {
         console.error("Failed to update pool field", e);
       }

@@ -1,337 +1,336 @@
 <template>
-<div>
-    <v-text-field :rules="[rules.required, rules.address]" class="pt-2" flat placeholder="addr1qyancz5tzq916qlz00xrwhv42ny0lscdfjxz2409e7qg9qqwhse7jpldnx5y0hg4j2wen85mfcc7aj3jfk26kfuhpm0stfnuex" outlined append-icon="mdi-magnify" @click:append="bech2cli" hide-details="auto" dense label="Address" :error-messages="bechErrors" v-model="bechAddress">
-
-    </v-text-field>
-    addressFound: {{cliAddress}}<br />
-    <span v-if="unverifiedAccount">UNVERIFIED! </span>userIdFound: {{foundUserId}}<br />
-    <span v-if="foundUserId!=null&&noPasswordHash">No Password Hash</span>
-    <span v-if="foundUserIds.length>1">otherUserIdsFound: {{foundUserIds}}</span><br />
-
-    <v-card class="mt-6 mx-auto mb-4" elevation="5"  v-if="foundUserId!=null&&!unverifiedAccount">
-        <div class="pt_form_title">
-            privMeta
-
-        </div>
-        <v-card-text dark v-if="foundPrivMetaErrors==''&&foundPrivMeta!=null">
-            <p v-if="'authority' in foundPrivMeta">
-                <strong>Authority:</strong> {{foundPrivMeta.authority}}
-            </p>
-            <p v-if="'myEmail' in foundPrivMeta">
-                <strong>Email:</strong> {{foundPrivMeta.myEmail}}
-            </p>
-
-
-            <p >
-                <strong>Subscriptions:</strong>
-                <ul v-if="'mySubscriptions' in foundPrivMeta">
-                    <li v-for="(subexpires,subtype) in foundPrivMeta.mySubscriptions" :key="subtype">
-                        {{subtype}} {{subexpires}} <span v-if="subexpires>1">Expires: {{subexpires | date("MMMM Do yyyy")}}</span><span v-else-if="subexpires==0">Permanent Enabled</span><span v-else-if="subexpires==1">Permanent Disabled</span>
-                        <v-btn class="mr-2 ml-5" x-small color="green" @click="subExpAdj(subtype,0)">Enable Always</v-btn> 
-                        <v-btn class="mr-2" x-small color="green" @click="subExpAdj(subtype,1)">Disable</v-btn> 
-                        <v-btn class="mr-2" x-small color="green" @click="subExpAdj(subtype,(Date.now()+7.884e+9))">Now +3 Months</v-btn> 
-                        <v-btn class="mr-2" x-small color="green" @click="subExpAdj(subtype,(Date.now()+3.154e+10))">Now +1 Year</v-btn>
-                    </li>
-                </ul>
-                <v-select  :items="subkeys" dense outlined flat hide-details label="Subscriptions" v-model="addSubscriptionValue" placeholder="Subscriptions">
-
-                            <template v-slot:append-outer>
-                                <v-btn @click="addSubscription">Add</v-btn>
-
-                            </template>
-                        </v-select>
-
-            </p>
-            <p v-if="'myAddresses' in foundPrivMeta">
-                <strong>Addresses:</strong>
-                <ul>
-                    <li v-for="(addressdata,address) in foundPrivMeta.myAddresses" :key="address">
-                        {{address}}
-                    </li>
-                </ul>
-            </p>
-            <p v-if="'myApiKeys' in foundPrivMeta">
-                <strong>ApiKeys:</strong>
-                <ul>
-                    <li v-for="(apiKeyMetadata,apiKey) in foundPrivMeta.myApiKeys" :key="apiKey">
-                        {{apiKey}}<Br />
-                        For Pools:
-                        <ul>
-                            <li v-for="(junk,poolid) in apiKeyMetadata.poolids" :key="poolid">
-                                {{poolid}}
-                            </li>
-                        </ul>
-
-                    </li>
-                </ul>
-            </p>
-            <p v-if="'myPools' in foundPrivMeta">
-                <strong>Pools:</strong>
-                <ul>
-                    <li v-for="(junk,poolid) in foundPrivMeta.myPools" :key="poolid">
-                        {{poolid}}
-                    </li>
-                </ul>
-            </p>
-            <p>
-                <strong>Owned Translations:</strong>
-                <ul>
-                    <li v-for="(junk,translation) in foundPrivMeta.ownedTranslations" :key="translation">
-                        {{translation}}
-                    </li>
-                    <li>
-
-                        <v-select item-text="languagetext" item-value="locale" :items="langs" dense outlined flat hide-details label="Language" v-model="addTranslationValue" placeholder="Language">
-
-                            <template v-slot:append-outer>
-                                <v-btn @click="addTranslation">Add</v-btn>
-
-                            </template>
-                        </v-select>
-                    </li>
-                </ul>
-
-            </p>
-        </v-card-text>
-        <v-card-text v-else>
-            {{foundPrivMetaErrors}}
-        </v-card-text>
+  <div class="pa-4">
+    <!-- Search -->
+    <v-card class="mb-4" elevation="3" dark>
+      <v-card-title class="subtitle-1">Look Up User</v-card-title>
+      <v-card-text>
+        <v-text-field
+          outlined
+          dense
+          hide-details="auto"
+          label="Stake address (bech32: stake1u…) or user UUID"
+          append-icon="mdi-magnify"
+          v-model="query"
+          :loading="searching"
+          :error-messages="searchError"
+          @click:append="lookup"
+          @keyup.enter="lookup"
+        />
+      </v-card-text>
     </v-card>
 
-    <v-card class="mt-6 mx-auto mb-4" elevation="5" :dark="nightmode" v-if="foundUserId!=null">
-        <div class="pt_form_title">
-            Verification Statuses
+    <!-- Results -->
+    <template v-if="user">
 
-        </div>
-        <v-card-text v-if="foundPrivMetaErrors==''&&verificationStatuses!=null">
+      <!-- Identity card -->
+      <v-card class="mb-4" elevation="3" dark>
+        <v-card-title class="subtitle-1">
+          Identity
+          <v-spacer />
+          <v-chip small :color="authorityColor(user.authority)">{{ user.authority }}</v-chip>
+        </v-card-title>
+        <v-card-text>
+          <div class="text-caption text--secondary">User ID</div>
+          <div class="text-body-2 mb-2 font-weight-medium" style="font-family:monospace">
+            {{ user.user_id }}
+            <v-btn x-small icon v-clipboard="user.user_id"><v-icon x-small>mdi-content-copy</v-icon></v-btn>
+          </div>
+          <div class="text-caption text--secondary">Created</div>
+          <div class="text-body-2 mb-3">{{ user.created_at | date("MMMM Do yyyy, h:mm a") }}</div>
 
-            <ul>
-                <li v-for="(addrkeystatus,addrkey) in verificationStatuses" :key="addrkey">
-                    {{addrkey}}
-                    <ul>
-                        <li> Created: {{addrkeystatus.createdDate | date("MMMM Do yyyy, h:mm:ss a")}}</li>
-                        <li> Amount: {{addrkeystatus.paymentAmount}}</li>
-                        <li> To Address: {{addrkeystatus.paymentToAddress}}</li>
-                        <li> Status: {{addrkeystatus.status}}
-                            <v-btn x-small v-if="addrkeystatus.status=='pending'" @click="manuallyVerify(foundUserId,addrkey)" color="success">Verify</v-btn>
-                        </li>
-                        <li> Verification Date: {{addrkeystatus.verificationDate | date("MMMM Do yyyy, h:mm:ss a")}}</li>
-                        <li v-if="foundUserId!=null&&noPasswordHash"> Password Hash: {{addrkeystatus.passwordHash}}
-                            <v-btn x-small v-if="addrkeystatus.passwordHash!=null" @click="installHash(foundUserId,addrkeystatus.passwordHash)" color="success">Install Hash</v-btn>
-                            </li> 
-
-                    </ul>
-                </li>
-            </ul>
-
+          <v-divider class="mb-3" />
+          <div class="d-flex align-center">
+            <span class="text-body-2 mr-3">Change authority:</span>
+            <v-btn-toggle v-model="newAuthority" dense mandatory>
+              <v-btn x-small value="user">user</v-btn>
+              <v-btn x-small value="groupadmin">groupadmin</v-btn>
+              <v-btn x-small value="administrator">administrator</v-btn>
+            </v-btn-toggle>
+            <v-btn
+              x-small
+              class="ml-3"
+              color="warning"
+              :disabled="newAuthority === user.authority || saving"
+              @click="setAuthority"
+            >Save</v-btn>
+            <v-fade-transition>
+              <span v-if="authoritySaved" class="ml-2 success--text text-caption">Saved!</span>
+            </v-fade-transition>
+          </div>
         </v-card-text>
-    </v-card>
+      </v-card>
 
-</div>
+      <!-- Addresses -->
+      <v-card class="mb-4" elevation="3" dark>
+        <v-card-title class="subtitle-1">
+          Stake Addresses
+          <v-chip x-small class="ml-2">{{ user.addresses.length }}</v-chip>
+        </v-card-title>
+        <v-card-text class="pa-0">
+          <v-list dense dark>
+            <v-list-item v-for="addr in user.addresses" :key="addr.stake_key">
+              <v-list-item-content>
+                <v-list-item-title class="text-caption" style="font-family:monospace">
+                  {{ addr.stake_key }}
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  <span v-if="addr.verified" class="success--text">
+                    <v-icon x-small color="success">mdi-check-circle</v-icon>
+                    Verified {{ addr.verified_at | date("MMM Do yyyy") }}
+                  </span>
+                  <span v-else class="warning--text">
+                    <v-icon x-small color="warning">mdi-clock-outline</v-icon>
+                    Unverified
+                  </span>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+              <v-list-item-action>
+                <v-btn
+                  v-if="!addr.verified"
+                  x-small
+                  color="success"
+                  :loading="verifying === addr.stake_key"
+                  @click="verifyAddress(addr.stake_key)"
+                >Verify</v-btn>
+                <v-btn
+                  v-if="!addr.verified"
+                  x-small
+                  color="error"
+                  class="ml-1"
+                  :loading="removing === addr.stake_key"
+                  @click="removeAddress(addr.stake_key)"
+                >Remove</v-btn>
+              </v-list-item-action>
+            </v-list-item>
+            <v-list-item v-if="!user.addresses.length">
+              <v-list-item-content>
+                <v-list-item-subtitle class="text--secondary">No addresses</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+      </v-card>
+
+      <!-- Pending Verifications -->
+      <v-card class="mb-4" elevation="3" dark v-if="pendingVerifications.length">
+        <v-card-title class="subtitle-1 warning--text">
+          <v-icon color="warning" class="mr-2">mdi-clock-alert-outline</v-icon>
+          Pending Verifications ({{ pendingVerifications.length }})
+        </v-card-title>
+        <v-card-text class="pa-0">
+          <v-list dense dark>
+            <v-list-item v-for="v in pendingVerifications" :key="v.stake_key">
+              <v-list-item-content>
+                <v-list-item-title class="text-caption" style="font-family:monospace">{{ v.stake_key }}</v-list-item-title>
+                <v-list-item-subtitle>
+                  Send <strong>{{ (v.payment_amount / 1000000).toFixed(6) }} ADA</strong>
+                  to <span style="font-family:monospace">{{ v.payment_address | ellipsiscrypto(20) }}</span>
+                  &nbsp;·&nbsp; Created {{ v.created_at | date("MMM Do yyyy, h:mm a") }}
+                </v-list-item-subtitle>
+              </v-list-item-content>
+              <v-list-item-action>
+                <v-btn
+                  x-small
+                  color="success"
+                  :loading="verifying === v.stake_key"
+                  @click="verifyAddress(v.stake_key)"
+                >Manual Verify</v-btn>
+              </v-list-item-action>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+      </v-card>
+
+      <!-- Password Reset Requests -->
+      <v-card class="mb-4" elevation="3" dark v-if="user.password_resets && user.password_resets.length">
+        <v-card-title class="subtitle-1">Recent Password Resets</v-card-title>
+        <v-card-text class="pa-0">
+          <v-list dense dark>
+            <v-list-item v-for="r in user.password_resets" :key="r.stake_key + r.created_at">
+              <v-list-item-content>
+                <v-list-item-title class="text-caption" style="font-family:monospace">{{ r.stake_key }}</v-list-item-title>
+                <v-list-item-subtitle>
+                  Status: <strong :class="r.status === 'completed' ? 'success--text' : 'warning--text'">{{ r.status }}</strong>
+                  &nbsp;·&nbsp; {{ r.created_at | date("MMM Do yyyy, h:mm a") }}
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+      </v-card>
+
+      <!-- Pools & API Keys -->
+      <v-row>
+        <v-col cols="12" md="6">
+          <v-card elevation="3" dark>
+            <v-card-title class="subtitle-1">
+              Claimed Pools
+              <v-chip x-small class="ml-2">{{ user.pools.length }}</v-chip>
+            </v-card-title>
+            <v-card-text class="pa-0">
+              <v-list dense dark>
+                <v-list-item v-for="pid in user.pools" :key="pid">
+                  <v-list-item-content>
+                    <v-list-item-title class="text-caption" style="font-family:monospace">{{ pid }}</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+                <v-list-item v-if="!user.pools.length">
+                  <v-list-item-subtitle class="text--secondary">No pools</v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-card elevation="3" dark>
+            <v-card-title class="subtitle-1">
+              API Keys
+              <v-chip x-small class="ml-2">{{ user.api_keys.length }}</v-chip>
+            </v-card-title>
+            <v-card-text class="pa-0">
+              <v-list dense dark>
+                <v-list-item v-for="key in user.api_keys" :key="key">
+                  <v-list-item-content>
+                    <v-list-item-title class="text-caption" style="font-family:monospace">{{ key }}</v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-btn x-small icon v-clipboard="key"><v-icon x-small>mdi-content-copy</v-icon></v-btn>
+                  </v-list-item-action>
+                </v-list-item>
+                <v-list-item v-if="!user.api_keys.length">
+                  <v-list-item-subtitle class="text--secondary">No API keys</v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+    </template>
+
+    <!-- Snackbar feedback -->
+    <v-snackbar v-model="snackbar" :color="snackbarColor" top :timeout="3000">
+      {{ snackbarMsg }}
+      <template v-slot:action><v-btn text @click="snackbar = false">Close</v-btn></template>
+    </v-snackbar>
+  </div>
 </template>
 
 <script>
-const Buffer = require("buffer/").Buffer;
-import { getUser, updateUserSettings } from "@/services/api";
-let { bech32 } = require("bech32");
+import api from "@/services/api";
+
 export default {
   props: ["nightmode"],
-  computed: {
-    noPasswordHash: function () {
-      if (typeof this.auth != "undefined" && this.auth != null) {
-        if (typeof this.auth.passwordHash == "undefined") {
-          return true;
-        }
-      }
-      return false;
-    },
-    langs: function () {
-      var a = [];
-      if (typeof this.langs_raw != "undefined" && this.langs_raw != null) {
-        for (const value of Object.values(this.langs_raw)) {
-          value.disabled = false;
-          value.languagetext = value.locale + " : " + value.language;
-          a.push(value);
-        }
-      }
-      return a.sort((a, b) => (a.language < b.language ? -1 : 1));
-    },
-    langs_raw: function () {
-      return this.$store.getters.getLanguages;
-    },
-
-    network: function () {
-      return this.$store.getters.getNetwork;
-    },
+  data() {
+    return {
+      query: "",
+      searching: false,
+      searchError: "",
+      user: null,
+      newAuthority: "user",
+      saving: false,
+      authoritySaved: false,
+      verifying: null,
+      removing: null,
+      snackbar: false,
+      snackbarMsg: "",
+      snackbarColor: "success",
+    };
   },
-  watch: {
-    foundUserId: async function (newval) {
-      if (newval != null) {
-        try {
-          const { data } = await getUser(newval);
-          if (data) {
-            this.foundPrivMeta = data.privMeta || {};
-            this.verificationStatuses = data.verificationStatuses || {};
-            this.auth = data.auth || {};
-            this.foundPrivMetaErrors = "";
-          }
-        } catch (e) {
-          console.error("Failed to fetch user data", e);
-          this.foundPrivMeta = null;
-          this.foundPrivMetaErrors = "Failed to fetch user data";
-        }
-      }
+  computed: {
+    pendingVerifications() {
+      if (!this.user) return [];
+      return (this.user.verifications || []).filter((v) => v.status === "pending");
     },
   },
   methods: {
-    installHash: async function (userid, passwordHash) {
+    async lookup() {
+      const q = (this.query || "").trim();
+      if (!q) return;
+      this.searching = true;
+      this.searchError = "";
+      this.user = null;
       try {
-        await updateUserSettings(userid, { auth: { passwordHash: passwordHash, createdAt: Date.now() } });
+        const isUuid = /^[0-9a-f-]{36}$/i.test(q);
+        const url = isUuid
+          ? `/api/admin/user/${q}`
+          : `/api/admin/user/lookup?stake_key=${encodeURIComponent(q)}`;
+        const { data } = await api.get(url);
+        this.user = data;
+        this.newAuthority = data.authority;
       } catch (e) {
-        console.error("Failed to install hash", e);
+        this.searchError =
+          e.response?.status === 404
+            ? "No user found with that address or ID"
+            : "Lookup failed: " + (e.response?.data?.detail || e.message);
+      } finally {
+        this.searching = false;
       }
     },
 
-    manuallyVerify: async function (userid, address) {
-      console.log(userid, address);
+    async setAuthority() {
+      this.saving = true;
       try {
-        await updateUserSettings(userid, {
-          manualVerify: {
-            address: address,
-            status: "verified",
-            verificationDate: Date.now(),
-          },
+        await api.put(`/api/admin/user/${this.user.user_id}/authority`, {
+          authority: this.newAuthority,
         });
+        this.user.authority = this.newAuthority;
+        this.authoritySaved = true;
+        setTimeout(() => (this.authoritySaved = false), 2500);
+        this.notify("Authority updated", "success");
       } catch (e) {
-        console.error("Failed to manually verify", e);
+        this.notify("Failed: " + (e.response?.data?.detail || e.message), "error");
+      } finally {
+        this.saving = false;
       }
     },
-    //subExpAdj(subtype,1)
-    subExpAdj: async function (subtype, subval) {
-      if (subtype != null && this.foundUserId != null) {
-        try {
-          await updateUserSettings(this.foundUserId, {
-            privMeta: { mySubscriptions: { [subtype]: subval } },
-          });
-        } catch (e) {
-          console.error("Failed to adjust subscription", e);
-        }
-      }
-    },
-    addSubscription: async function () {
-      if (this.addSubscriptionValue != null && this.foundUserId != null) {
-        try {
-          await updateUserSettings(this.foundUserId, {
-            privMeta: { mySubscriptions: { [this.addSubscriptionValue]: 1 } },
-          });
-        } catch (e) {
-          console.error("Failed to add subscription", e);
-        }
-      }
-    },
-    addTranslation: async function () {
-      if (this.addTranslationValue != null && this.foundUserId != null) {
-        try {
-          await updateUserSettings(this.foundUserId, {
-            privMeta: { ownedTranslations: { [this.addTranslationValue]: true } },
-          });
-        } catch (e) {
-          console.error("Failed to add translation", e);
-        }
-      }
-    },
-    queryaddress: async function (address) {
-      if (address != null) {
-        this.foundUserIds = [];
-        try {
-          const { queryAddress } = await import("@/services/api");
-          const response = await queryAddress(address);
-          if (response.data && response.data.userId) {
-            this.foundUserId = response.data.userId;
-            this.bechErrors = "";
-            this.unverifiedAccount = response.data.unverified || false;
-            if (this.unverifiedAccount) {
-              this.foundUserIds.push(response.data.userId);
-            }
-          } else {
-            this.foundUserId = null;
-            this.unverifiedAccount = false;
-            this.foundPrivMeta = null;
-            this.foundPrivMetaErrors = "";
-            this.bechErrors = "No account found with that address";
-          }
-        } catch (e) {
-          this.foundUserId = null;
-          this.unverifiedAccount = false;
-          this.foundPrivMeta = null;
-          this.foundPrivMetaErrors = "";
-          this.bechErrors = "No account found with that address";
-        }
-      }
-    },
-    bech2cli: function () {
-      if (this.bechAddress == null || this.bechAddress == "") {
-        this.cliErrors = "Please enter a valid address";
-        return;
-      }
+
+    async verifyAddress(stakeKey) {
+      this.verifying = stakeKey;
       try {
-        console.log("trying");
-        this.bechErrors = "";
-        this.cliErrors = "";
-
-        if (this.bechAddress && this.bechAddress.startsWith("addr")) {
-          let output = bech32.decode(this.bechAddress, 256);
-          this.cliAddress = Buffer.from(bech32.fromWords(output.words))
-            .toString("hex")
-            .slice(58, 128);
-        } else if (this.bechAddress && this.bechAddress.startsWith("stake")) {
-          let output = bech32.decode(this.bechAddress, 256);
-          this.cliAddress = Buffer.from(bech32.fromWords(output.words))
-            .toString("hex")
-            .slice(2);
-        } else {
-          this.cliAddress = this.bechAddress;
+        await api.post(`/api/admin/user/${this.user.user_id}/verify/${encodeURIComponent(stakeKey)}`);
+        // Update local state
+        const addr = this.user.addresses.find((a) => a.stake_key === stakeKey);
+        if (addr) {
+          addr.verified = true;
+          addr.verified_at = Math.floor(Date.now() / 1000);
         }
-
-        this.queryaddress(this.cliAddress);
+        const ver = this.user.verifications.find((v) => v.stake_key === stakeKey);
+        if (ver) ver.status = "verified";
+        this.notify("Address verified", "success");
       } catch (e) {
-        console.log("error");
-        console.log(this.bechErrors);
-        this.bechErrors = e.toString();
-        this.cliAddress = "";
-        this.foundUserId = null;
+        this.notify("Failed: " + (e.response?.data?.detail || e.message), "error");
+      } finally {
+        this.verifying = null;
       }
     },
-  },
-  data() {
-    return {
-      auth: {},
-      addSubscriptionValue: null,
-      subkeys: ["feature_rewards_tracking", "feature_enhanced_spo"],
-      addTranslationValue: null,
-      verificationStatuses: {},
-      rules: {
-        required: (value) => !!value || this.$t("app.required"),
-        address: (value) => {
-          const pattern = /^addr[a-z0-9]{99}|stake[a-z0-9]{54}$/gim;
-          return pattern.test(value) || this.$t("app.InvalidAddress"); //'Invalid Address.'
-        },
-      },
-      unverifiedAccount: false,
-      foundPrivMeta: {},
-      foundPrivMetaErrors: "",
-      foundUserId: null,
-      foundUserIds: [],
-      bechErrors: null,
-      cliAddress: null,
-      bechAddress:
-        "stake1u98smhcptv87gtky8h4429g65sy0gglas52dljf7j5wnapq6d0m0a",
-      addr2user: {},
-      tab: "users",
-    };
+
+    async removeAddress(stakeKey) {
+      this.removing = stakeKey;
+      try {
+        await api.delete(
+          `/api/admin/user/${this.user.user_id}/address/${encodeURIComponent(stakeKey)}`
+        );
+        this.user.addresses = this.user.addresses.filter((a) => a.stake_key !== stakeKey);
+        this.notify("Address removed", "success");
+      } catch (e) {
+        this.notify("Failed: " + (e.response?.data?.detail || e.message), "error");
+      } finally {
+        this.removing = null;
+      }
+    },
+
+    authorityColor(authority) {
+      if (authority === "administrator") return "red darken-2";
+      if (authority === "groupadmin") return "orange darken-2";
+      return "grey darken-1";
+    },
+
+    notify(msg, color = "success") {
+      this.snackbarMsg = msg;
+      this.snackbarColor = color;
+      this.snackbar = true;
+    },
   },
 };
 </script>
-
-<style scoped>
-</style>

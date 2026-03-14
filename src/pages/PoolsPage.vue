@@ -830,7 +830,7 @@ export default {
             text:
               this.$t("global.epoch") +
               " " +
-              (this.genesis.epoch - 1) +
+              (this.genesis.epoch - 3) +
               " " +
               this.$t("global.ros"),
             align: "center",
@@ -844,7 +844,7 @@ export default {
           text:
             this.$t("global.epoch") +
             " " +
-            (this.genesis.epoch - 1) +
+            (this.genesis.epoch - 3) +
             " " +
             this.$t("global.ros"),
           value: "roifcp1",

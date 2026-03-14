@@ -189,8 +189,8 @@ export default {
                         /* eslint-disable no-unreachable */
                         break
                     case 'roifcp1':
-                        b['roifcp1'] = b.epoch_ros || 0
-                        a['roifcp1'] = a.epoch_ros || 0
+                        b['roifcp1'] = b.prev_epoch_ros || 0
+                        a['roifcp1'] = a.prev_epoch_ros || 0
                         if (!isDesc[0]) {
                             if (b['roifcp1'] == 0 || b['roifcp1'] == null) return 1
                             if (a['roifcp1'] == 0 || a['roifcp1'] == null) return -1

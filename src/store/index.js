@@ -88,6 +88,8 @@ function convertPool(a, state) {
     two_month_ros: a.two_month_ros ?? 0,
     epoch_ros: a.epoch_ros ?? 0,
     epoch_ros_epoch: a.epoch_ros_epoch ?? null,
+    prev_epoch_ros: a.prev_epoch_ros ?? 0,
+    prev_epoch_ros_epoch: a.prev_epoch_ros_epoch ?? null,
     epoch_rewards: a.epoch_rewards ?? 0,
     epoch_tax: a.epoch_tax ?? 0,
     lifetime_rewards: a.lifetime_rewards ?? 0,

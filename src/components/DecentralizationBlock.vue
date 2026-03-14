@@ -461,13 +461,10 @@ export default {
               });
               let percentage = ((value * 100) / sum).toFixed(0) + "%";
 
-              var shortLabel = ctx.chart.data.labels[ctx.dataIndex].substring(
-                0,
-                20
-              );
-              if (
-                ctx.chart.data.labels[ctx.dataIndex].length != shortLabel.length
-              ) {
+              const rawLabel = ctx.chart.data.labels[ctx.dataIndex];
+              const label = rawLabel != null ? String(rawLabel) : "";
+              var shortLabel = label.substring(0, 20);
+              if (label.length != shortLabel.length) {
                 shortLabel = shortLabel + "...";
               }
 

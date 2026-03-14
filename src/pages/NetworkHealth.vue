@@ -588,8 +588,9 @@ export default {
                     sum += data;
                   }
                 });
-                var shortLabel = context.label.substring(0, 10);
-                if (context.label.length != shortLabel.length) {
+                const label = context.label != null ? String(context.label) : "";
+                var shortLabel = label.substring(0, 10);
+                if (label.length != shortLabel.length) {
                   shortLabel = shortLabel + "...";
                 }
                 let percentage = ((context.raw * 100) / sum).toFixed(0) + "%";
@@ -616,13 +617,10 @@ export default {
               });
               let percentage = ((value * 100) / sum).toFixed(0) + "%";
 
-              var shortLabel = ctx.chart.data.labels[ctx.dataIndex].substring(
-                0,
-                10
-              );
-              if (
-                ctx.chart.data.labels[ctx.dataIndex].length != shortLabel.length
-              ) {
+              const rawLabel = ctx.chart.data.labels[ctx.dataIndex];
+              const label = rawLabel != null ? String(rawLabel) : "";
+              var shortLabel = label.substring(0, 10);
+              if (label.length != shortLabel.length) {
                 shortLabel = shortLabel + "...";
               }
 
@@ -1163,8 +1161,9 @@ export default {
                     sum += data;
                   }
                 });
-                var shortLabel = context.label.substring(0, 20);
-                if (context.label.length != shortLabel.length) {
+                const label = context.label != null ? String(context.label) : "";
+                var shortLabel = label.substring(0, 20);
+                if (label.length != shortLabel.length) {
                   shortLabel = shortLabel + "...";
                 }
                 let ttvalue = context.raw;
@@ -1197,13 +1196,10 @@ export default {
               });
               let percentage = ((value * 100) / sum).toFixed(0) + "%";
 
-              var shortLabel = ctx.chart.data.labels[ctx.dataIndex].substring(
-                0,
-                20
-              );
-              if (
-                ctx.chart.data.labels[ctx.dataIndex].length != shortLabel.length
-              ) {
+              const rawLabel = ctx.chart.data.labels[ctx.dataIndex];
+              const label = rawLabel != null ? String(rawLabel) : "";
+              var shortLabel = label.substring(0, 20);
+              if (label.length != shortLabel.length) {
                 shortLabel = shortLabel + "...";
               }
               let ttvalue = value;
@@ -1254,8 +1250,9 @@ export default {
                     sum += data;
                   }
                 });
-                var shortLabel = context.label.substring(0, 20);
-                if (context.label.length != shortLabel.length) {
+                const label = context.label != null ? String(context.label) : "";
+                var shortLabel = label.substring(0, 20);
+                if (label.length != shortLabel.length) {
                   shortLabel = shortLabel + "...";
                 }
                 let ttvalue = context.raw;
@@ -1286,13 +1283,10 @@ export default {
               });
               let percentage = ((value * 100) / sum).toFixed(0) + "%";
 
-              var shortLabel = ctx.chart.data.labels[ctx.dataIndex].substring(
-                0,
-                20
-              );
-              if (
-                ctx.chart.data.labels[ctx.dataIndex].length != shortLabel.length
-              ) {
+              const rawLabel = ctx.chart.data.labels[ctx.dataIndex];
+              const label = rawLabel != null ? String(rawLabel) : "";
+              var shortLabel = label.substring(0, 20);
+              if (label.length != shortLabel.length) {
                 shortLabel = shortLabel + "...";
               }
               let ttvalue = value;

@@ -311,11 +311,10 @@ export default {
                     sum += data;
                   }
                 });
-                if (typeof context.label == "undefined") {
-                  return "";
-                }
-                var shortLabel = context.label.substring(0, 5);
-                if (context.label.length != shortLabel.length) {
+                const label = context.label != null ? String(context.label) : "";
+                if (!label) return "";
+                var shortLabel = label.substring(0, 5);
+                if (label.length != shortLabel.length) {
                   shortLabel = shortLabel + "...";
                 }
                 let ttvalue = context.raw;
@@ -343,16 +342,11 @@ export default {
                 }
               });
               let percentage = ((value * 100) / sum).toFixed(0) + "%";
-              if (typeof ctx.chart.data.labels[ctx.dataIndex] == "undefined") {
-                return "";
-              }
-              var shortLabel = ctx.chart.data.labels[ctx.dataIndex].substring(
-                0,
-                5
-              );
-              if (
-                ctx.chart.data.labels[ctx.dataIndex].length != shortLabel.length
-              ) {
+              const rawLabel = ctx.chart.data.labels[ctx.dataIndex];
+              const label = rawLabel != null ? String(rawLabel) : "";
+              if (!label) return "";
+              var shortLabel = label.substring(0, 5);
+              if (label.length != shortLabel.length) {
                 shortLabel = shortLabel + "...";
               }
               let ttvalue = value;

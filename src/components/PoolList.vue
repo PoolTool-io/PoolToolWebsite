@@ -62,7 +62,7 @@
       <span>{{ item.epoch_ros | fpercent }}</span>
     </template>
     <template #[`item.roifcp1`]="{ item }">
-      <span>{{ item.epoch_ros | fpercent }}</span>
+      <span>{{ item.prev_epoch_ros | fpercent }}</span>
     </template>
     <template #[`item.grouproi`]="{ item }">
       <span>{{

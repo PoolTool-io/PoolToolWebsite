@@ -110,9 +110,10 @@ export default {
                     sum += data;
                   }
                 });
-                var shortLabel = context.label.substring(0, 20);
+                const label = context.label != null ? String(context.label) : "";
+                var shortLabel = label.substring(0, 20);
 
-                if (context.label.length != shortLabel.length) {
+                if (label.length != shortLabel.length) {
                   shortLabel = shortLabel + "...";
                 }
                 if (
@@ -148,15 +149,10 @@ export default {
                 }
               });
               let percentage = ((value * 100) / sum).toFixed(0) + "%";
-              var shortLabel = "";
-
-              shortLabel = ctx.chart.data.labels[ctx.dataIndex].substring(
-                0,
-                20
-              );
-              if (
-                ctx.chart.data.labels[ctx.dataIndex].length != shortLabel.length
-              ) {
+              const rawLabel = ctx.chart.data.labels[ctx.dataIndex];
+              const label = rawLabel != null ? String(rawLabel) : "";
+              var shortLabel = label.substring(0, 20);
+              if (label.length != shortLabel.length) {
                 shortLabel = shortLabel + "...";
               }
               if (
