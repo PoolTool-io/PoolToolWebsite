@@ -295,7 +295,8 @@
       "awards": "Awards",
       "metrics": "Metrics",
       "curves": "",
-      "admin": ""
+      "admin": "",
+      "assignedSlotsStaleHint": "Expected slots were submitted for epoch {schedule}. Current epoch is {current}."
     },
     "profile": {
       "accountType": "Account type",

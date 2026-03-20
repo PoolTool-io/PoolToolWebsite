@@ -438,7 +438,8 @@
       <span class="text-no-wrap">
         <div
           v-if="
-            (item.assigned_slots != null) & (item.assigned_slots != 0) &&
+            item.assigned_slots != null &&
+            item.assigned_slots != 0 &&
             item.assigned_slots ==
               (item.epoch_blocks_epoch == genesis.epoch
                 ? item.epoch_blocks
@@ -458,12 +459,32 @@
           </v-tooltip>
         </div>
         {{ item.epoch_blocks_epoch == genesis.epoch ? item.epoch_blocks : 0 }}
-        {{
-          item.assigned_slots != null &&
-          item.assigned_slots_epoch == genesis.epoch
-            ? " / " + item.assigned_slots
-            : null
-        }}
+        <template
+          v-if="
+            item.assigned_slots != null && item.assigned_slots > 0
+          "
+        >
+          <v-tooltip
+            v-if="item.assigned_slots_epoch != genesis.epoch"
+            bottom
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <span v-bind="attrs" v-on="on" class="text-no-wrap">
+                / {{ item.assigned_slots
+                }}<span class="grey--text text--darken-1">*</span>
+              </span>
+            </template>
+            <span>{{
+              $t("app.poolPage.assignedSlotsStaleHint", {
+                schedule: item.assigned_slots_epoch,
+                current: genesis.epoch,
+              })
+            }}</span>
+          </v-tooltip>
+          <span v-else class="text-no-wrap">
+            / {{ item.assigned_slots }}
+          </span>
+        </template>
       </span>
     </template>
 
