@@ -943,6 +943,16 @@ export default {
     customSort(items) {
       return items;
     },
+    /** Unix seconds; matches table display when exchange rates lack this epoch. */
+    rewardDateSecondsForExport(item) {
+      if (item.rewardDate != null) {
+        return item.rewardDate;
+      }
+      const d = add(parseISO("2017-09-23T21:44:51Z"), {
+        days: (Number(item.epoch) + 2) * 5,
+      });
+      return Math.floor(d.getTime() / 1000);
+    },
     onCsvDownload() {
       if (this.isEpochRangeInvalid) {
         this.message = "Epoch Range Is Invalid";
@@ -1120,7 +1130,8 @@ export default {
 
       var jsondat = this.ahist
         .filter((a) => {
-          const formatedRewardDate = format(a.rewardDate * 1000, "yyyy-MM-dd");
+          const rdSec = this.rewardDateSecondsForExport(a);
+          const formatedRewardDate = format(rdSec * 1000, "yyyy-MM-dd");
           let isBetweenDateRange = true;
           let isBetweenEpochRange = true;
 
@@ -1132,7 +1143,7 @@ export default {
 
           // check if epoch range is selected
           if (
-            this.selectedEpochFilterOpt != "ALL" &&
+            this.selectedEpochFilterOpt === "Select Range" &&
             this.downloadFromEpoch &&
             this.downloadToEpoch &&
             this.downloadFromEpoch <= this.downloadToEpoch
@@ -1142,20 +1153,21 @@ export default {
               +a.epoch <= this.downloadToEpoch;
 
           return (
-            a.rewardDate != null &&
             !a.pending &&
+            !a._loading &&
             isBetweenDateRange &&
             isBetweenEpochRange
           );
         })
         .map(function (a) {
+          var rdSec = this.rewardDateSecondsForExport(a);
           var b = {};
           switch (this.downloadFormat) {
             case "koinly":
               b["Koinly Date"] =
-                new Date(a["rewardDate"] * 1000).toISOString().substr(0, 10) +
+                new Date(rdSec * 1000).toISOString().substr(0, 10) +
                 " " +
-                new Date(a["rewardDate"] * 1000).toISOString().substr(11, 8) +
+                new Date(rdSec * 1000).toISOString().substr(11, 8) +
                 " UTC";
               b["Amount"] = (a["operatorRewards"] + a["stakeRewards"]) / 1e6;
               b["Currency"] = "ADA";
@@ -1192,7 +1204,7 @@ export default {
                   : "") +
                 " from: " +
                 a["delegatedToTicker"];
-              b["Date"] = format(a["rewardDate"] * 1000, "yyyy-MM-dd HH:mm:ss");
+              b["Date"] = format(rdSec * 1000, "yyyy-MM-dd HH:mm:ss");
               break;
             case "cointracking_stakingonly":
               b["Type"] = "Staking";
@@ -1211,7 +1223,7 @@ export default {
                 a["stakeRewards"] / 1e6 +
                 " from: " +
                 a["delegatedToTicker"];
-              b["Date"] = format(a["rewardDate"] * 1000, "yyyy-MM-dd HH:mm:ss");
+              b["Date"] = format(rdSec * 1000, "yyyy-MM-dd HH:mm:ss");
               break;
             case "cointracking_operatoronly":
               b["Type"] = "Mining";
@@ -1223,17 +1235,17 @@ export default {
               b["curf"] = "";
               b["Exchange"] = "Cardano Protocol";
               b["Group"] = "";
-              b["Comment"] = a["rewardDate"] * 1000;
-              "Epoch: " +
+              b["Comment"] =
+                "Epoch: " +
                 a["epoch"] +
                 " Operator Rewards: " +
                 a["operatorRewards"] / 1e6 +
                 " from: " +
                 a["delegatedToTicker"];
-              b["Date"] = format(a["rewardDate"] * 1000, "yyyy-MM-dd HH:mm:ss");
+              b["Date"] = format(rdSec * 1000, "yyyy-MM-dd HH:mm:ss");
               break;
             case "cointracking_io":
-              b["Date"] = format(a["rewardDate"] * 1000, "yyyy-MM-dd HH:mm:ss");
+              b["Date"] = format(rdSec * 1000, "yyyy-MM-dd HH:mm:ss");
               b["Received Quantity"] =
                 (a["operatorRewards"] + a["stakeRewards"]) / 1e6;
               b["Received Currency"] = "ADA";
@@ -1244,9 +1256,7 @@ export default {
               b["Tag"] = "";
               break;
             case "taxbit":
-              b["Date and Time"] = new Date(
-                a["rewardDate"] * 1000
-              ).toISOString();
+              b["Date and Time"] = new Date(rdSec * 1000).toISOString();
               b["Transaction Type"] = "Income";
               b["Sent Quantity"] = null;
               b["Sent Currency"] = null;
@@ -1263,7 +1273,7 @@ export default {
               break;
             case "crypto_tax_calculator":
             default:
-              b["date"] = new Date(a["rewardDate"] * 1000).toISOString();
+              b["date"] = new Date(rdSec * 1000).toISOString();
               b["epoch"] = a["epoch"];
               b["stake"] = a["amount"] / 1e6;
               b["pool"] = a["delegatedToTicker"];
@@ -1271,15 +1281,18 @@ export default {
               b["stake_rewards"] = a["stakeRewards"] / 1e6;
               b["total_rewards"] =
                 (a["operatorRewards"] + a["stakeRewards"]) / 1e6;
-              b["rate"] = a.adaPrices[this.downloadCurrency];
+              var fx =
+                a.adaPrices && a.adaPrices[this.downloadCurrency] != null
+                  ? a.adaPrices[this.downloadCurrency]
+                  : null;
+              b["rate"] = fx != null ? fx : "";
               b["currency"] = this.downloadCurrency;
               b["operator_rewards_value"] =
-                (a.adaPrices[this.downloadCurrency] * a["operatorRewards"]) /
-                1e6;
+                fx != null ? (fx * a["operatorRewards"]) / 1e6 : "";
               b["stake_rewards_value"] =
-                (a.adaPrices[this.downloadCurrency] * a["stakeRewards"]) / 1e6;
+                fx != null ? (fx * a["stakeRewards"]) / 1e6 : "";
               b["value"] =
-                a.adaPrices[this.downloadCurrency] * b["total_rewards"];
+                fx != null ? fx * b["total_rewards"] : "";
           }
 
           return b;
