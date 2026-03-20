@@ -233,8 +233,7 @@
       "awards": "Awards",
       "curves": "Saturation Curve",
       "manage": "Manage",
-      "metrics": "Metrics",
-      "assignedSlotsStaleHint": "Expected slots were submitted for epoch {schedule}. Current epoch is {current}."
+      "metrics": "Metrics"
     },
     "poolPageHistory": {
       "delegatorRewards": "Delegator Rewards",

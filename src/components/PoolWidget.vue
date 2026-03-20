@@ -257,8 +257,8 @@
               <span class="text-no-wrap">
                 <span
                   v-if="
-                    pool.assigned_slots != null &&
-                    pool.assigned_slots != 0 &&
+                    (pool.assigned_slots != null) &
+                      (pool.assigned_slots != 0) &&
                     pool.assigned_slots ==
                       (pool.epoch_blocks_epoch == currentGenesis.epoch
                         ? pool.epoch_blocks
@@ -282,34 +282,12 @@
                     ? pool.epoch_blocks
                     : 0
                 }}
-                <template
-                  v-if="
-                    pool.assigned_slots != null && pool.assigned_slots > 0
-                  "
-                >
-                  <v-tooltip
-                    v-if="
-                      pool.assigned_slots_epoch != currentGenesis.epoch
-                    "
-                    top
-                  >
-                    <template v-slot:activator="{ on, attrs }">
-                      <span v-bind="attrs" v-on="on" class="text-no-wrap">
-                        / {{ pool.assigned_slots
-                        }}<span class="grey--text text--darken-1">*</span>
-                      </span>
-                    </template>
-                    <span>{{
-                      $t("app.poolPage.assignedSlotsStaleHint", {
-                        schedule: pool.assigned_slots_epoch,
-                        current: currentGenesis.epoch,
-                      })
-                    }}</span>
-                  </v-tooltip>
-                  <span v-else class="text-no-wrap">
-                    / {{ pool.assigned_slots }}
-                  </span>
-                </template>
+                {{
+                  pool.assigned_slots != null &&
+                  pool.assigned_slots_epoch == currentGenesis.epoch
+                    ? " / " + pool.assigned_slots
+                    : null
+                }}
               </span>
             </span>
             <div class="d-block text-no-wrap">
