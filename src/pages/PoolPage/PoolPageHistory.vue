@@ -363,26 +363,44 @@ export default {
         this.pool_fee_history != null &&
         this.ros_history != null
       ) {
-        for (const [key, value] of Object.entries(this.block_history)) {
+        // Union all epoch keys across every history source so the current epoch
+        // appears even before pool_epoch_blocks is written (mid-epoch).
+        const allEpochs = new Set([
+          ...Object.keys(this.block_history),
+          ...Object.keys(this.slots_history),
+          ...Object.keys(this.stake_history),
+        ]);
+
+        for (const key of allEpochs) {
+          const liveBlocks =
+            this.pool &&
+            String(this.pool.epoch_blocks_epoch) === key
+              ? this.pool.epoch_blocks
+              : null;
           var entry = {
             epoch: key,
-            epoch_blocks: value,
+            epoch_blocks:
+              this.block_history[key] != null
+                ? this.block_history[key]
+                : liveBlocks != null
+                ? liveBlocks
+                : 0,
             epoch_slots:
-              typeof this.slots_history[key] == "undefined"
-                ? null
-                : this.slots_history[key].slots,
+              this.slots_history[key] != null
+                ? this.slots_history[key].slots
+                : null,
             blockstake:
-              this.stake_history[key] == null ? 0 : this.stake_history[key],
+              this.stake_history[key] != null ? this.stake_history[key] : 0,
             epoch_rewards:
-              this.delegator_reward_history[key] == null
-                ? 0
-                : this.delegator_reward_history[key],
+              this.delegator_reward_history[key] != null
+                ? this.delegator_reward_history[key]
+                : 0,
             epoch_tax:
-              this.pool_fee_history[key] == null
-                ? 0
-                : this.pool_fee_history[key],
+              this.pool_fee_history[key] != null
+                ? this.pool_fee_history[key]
+                : 0,
             ros:
-              this.ros_history[key] == null ? 0 : this.ros_history[key],
+              this.ros_history[key] != null ? this.ros_history[key] : 0,
           };
           a.push(entry);
         }
